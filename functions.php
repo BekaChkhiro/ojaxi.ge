@@ -240,7 +240,7 @@ add_action('rest_api_init', function() {
             header('Access-Control-Allow-Origin: ' . esc_url_raw(site_url()));
             header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
             header('Access-Control-Allow-Credentials: true');
-            header('Access-Control-Allow-Headers: Authorization, X-WP-Nonce, Content-Type');
+            header('Access-Control-Allow-Headers: Authorization, X-WC-Store-API-Nonce, Content-Type');
         }
         return $served;
     }, 10, 3);
