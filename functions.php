@@ -466,29 +466,56 @@ function handle_create_order() {
 
 function generate_fondy_payment_url($order) {
     $merchant_id = '5ad6b888f4becb0c33d543d54e57d86c';
-    $secret_key = 'whNuTCpCJgUSMRyshXEBaqMbKbJWD3IH'; // Replace with your actual secret key
+    $secret_key = 'whNuTCpCJgUSMRyshXEBaqMbKbJWD3IH';
 
     $payment_data = array(
-        'order_id'      => $order->get_id() . '_' . time(), // Add timestamp to make unique
+        'order_id'      => time() . '_' . $order->get_id(),
         'merchant_id'   => $merchant_id,
         'order_desc'    => sprintf('Order #%s', $order->get_id()),
-        'amount'        => round($order->get_total() * 100), // Convert to cents
+        'amount'        => round($order->get_total() * 100),
         'currency'      => 'GEL',
         'response_url'  => $order->get_checkout_order_received_url(),
         'server_callback_url' => home_url('/wc-api/fondy-callback'),
+        'sender_email'  => 'customer@example.com',
+        'required_rectoken' => 'Y',
+        'lifetime'      => 36000,
         'lang'          => 'ka'
     );
 
     // Generate signature
-    ksort($payment_data);
-    $signature_string = implode('|', $payment_data) . '|' . $secret_key;
-    $signature = hash_hmac('sha256', $signature_string, $secret_key);
+    $signature_data = $payment_data;
+    ksort($signature_data);
+    $signature_string = $secret_key;
+    foreach ($signature_data as $key => $value) {
+        $signature_string .= '|' . $value;
+    }
+    
+    $signature = sha1($signature_string);
+    $payment_data['signature'] = $signature;
 
-    return sprintf(
-        'https://pay.fondy.eu/merchants/%s/default/index.html?token=%s',
-        $merchant_id,
-        $signature
+    // Create payment request
+    $request = array(
+        'request' => $payment_data
     );
+
+    // Send request to Fondy API
+    $response = wp_remote_post('https://api.fondy.eu/api/checkout/url/', array(
+        'body' => json_encode($request),
+        'headers' => array('Content-Type' => 'application/json'),
+    ));
+
+    if (is_wp_error($response)) {
+        return false;
+    }
+
+    $body = wp_remote_retrieve_body($response);
+    $result = json_decode($body, true);
+
+    if (isset($result['response']['checkout_url'])) {
+        return $result['response']['checkout_url'];
+    }
+
+    return false;
 }
 
 // Add Store API support for custom checkout fields
