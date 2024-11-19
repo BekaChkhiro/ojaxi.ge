@@ -361,3 +361,75 @@ function mytheme_use_wc_templates($located, $template_name, $args, $template_pat
 }
 add_filter('wc_get_template', 'mytheme_use_wc_templates', 10, 5);
 
+// Add AJAX handler for order creation
+add_action('wp_ajax_create_order', 'handle_create_order');
+add_action('wp_ajax_nopriv_create_order', 'handle_create_order');
+
+function handle_create_order() {
+    check_ajax_referer('wp_rest', 'security');
+
+    try {
+        // Create order
+        $order = wc_create_order();
+
+        // Set billing data
+        $billing_address = array(
+            'first_name' => sanitize_text_field($_POST['billing_first_name']),
+            'last_name'  => sanitize_text_field($_POST['billing_last_name']),
+            'phone'      => sanitize_text_field($_POST['billing_phone']),
+            'address_1'  => sanitize_text_field($_POST['billing_address_1']),
+            'city'       => sanitize_text_field($_POST['billing_city']),
+            'country'    => 'GE'
+        );
+        
+        $order->set_address($billing_address, 'billing');
+        $order->set_address($billing_address, 'shipping');
+
+        // Add items to order
+        if (isset($_POST['cart_items']) && is_array($_POST['cart_items'])) {
+            foreach ($_POST['cart_items'] as $item) {
+                $product_id = absint($item['product_id']);
+                $quantity = absint($item['quantity']);
+                $product = wc_get_product($product_id);
+                
+                if ($product) {
+                    $order->add_product($product, $quantity);
+                }
+            }
+        }
+
+        // Set payment method
+        $payment_method = sanitize_text_field($_POST['payment_method']);
+        $order->set_payment_method($payment_method);
+
+        // Add order note if alternative phone provided
+        if (!empty($_POST['order_comments'])) {
+            $order->add_order_note(sanitize_text_field($_POST['order_comments']));
+        }
+
+        $order->calculate_totals();
+        $order->save();
+
+        // Handle Fondy payment
+        if ($payment_method === 'fondy') {
+            $payment_url = get_fondy_payment_url($order->get_id());
+            wp_send_json_success(array(
+                'order_id' => $order->get_id(),
+                'payment_url' => $payment_url
+            ));
+        } else {
+            wp_send_json_success(array(
+                'order_id' => $order->get_id(),
+                'order_received_url' => $order->get_checkout_order_received_url()
+            ));
+        }
+
+    } catch (Exception $e) {
+        wp_send_json_error(array(
+            'message' => $e->getMessage()
+        ));
+    }
+
+    wp_die();
+}
+
