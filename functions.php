@@ -563,3 +563,34 @@ add_action('rest_api_init', function() {
     });
 }, 15);
 
+// Add WooCommerce checkout parameters
+function add_checkout_params() {
+    if (is_checkout()) {
+        wp_localize_script('wc-checkout', 'wc_checkout_params', apply_filters('wc_checkout_params', array(
+            'ajax_url'                  => WC()->ajax_url(),
+            'wc_ajax_url'              => WC_AJAX::get_endpoint('%%endpoint%%'),
+            'update_order_review_nonce' => wp_create_nonce('update-order-review'),
+            'checkout_nonce'            => wp_create_nonce('woocommerce-process-checkout'),
+            'i18n_checkout_error'       => esc_attr__('Error processing checkout. Please try again.', 'woocommerce'),
+        )));
+    }
+}
+add_action('wp_enqueue_scripts', 'add_checkout_params', 30);
+
+// Initialize WooCommerce session
+function init_wc_session() {
+    if (!is_admin() && !WC()->session) {
+        WC()->session = new WC_Session_Handler();
+        WC()->session->init();
+    }
+}
+add_action('init', 'init_wc_session', 5);
+
+// Add cart fragments support
+function add_cart_fragments_scripts() {
+    if (is_checkout()) {
+        wp_enqueue_script('wc-cart-fragments');
+    }
+}
+add_action('wp_enqueue_scripts', 'add_cart_fragments_scripts', 20);
+
