@@ -594,3 +594,19 @@ function add_cart_fragments_scripts() {
 }
 add_action('wp_enqueue_scripts', 'add_cart_fragments_scripts', 20);
 
+add_action('wp_enqueue_scripts', function() {
+    if (is_checkout()) {
+        wp_enqueue_script('wc-checkout');
+        wp_enqueue_script('woocommerce');
+        wp_localize_script('wc-checkout', 'wc_checkout_params', array(
+            'ajax_url' => WC()->ajax_url(),
+            'checkout_nonce' => wp_create_nonce('woocommerce-process-checkout')
+        ));
+    }
+});
+
+add_action('woocommerce_checkout_process', function() {
+    if (!wp_verify_nonce($_POST['security'], 'woocommerce-process-checkout')) {
+        wp_die('Security check failed');
+    }
+});
