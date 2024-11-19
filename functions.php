@@ -400,9 +400,8 @@ function handle_create_order() {
     check_ajax_referer('wp_rest', 'security');
 
     try {
-        // Create order
         $order = wc_create_order();
-
+        
         // Set billing data
         $billing_address = array(
             'first_name' => sanitize_text_field($_POST['billing_first_name']),
@@ -441,9 +440,12 @@ function handle_create_order() {
         $order->calculate_totals();
         $order->save();
 
-        // Handle Fondy payment
+        // Generate Fondy payment URL immediately if needed
         if ($payment_method === 'fondy') {
-            $payment_url = get_fondy_payment_url($order->get_id());
+            $payment_url = generate_fondy_payment_url($order);
+            if (!$payment_url) {
+                throw new Exception('Fondy payment URL generation failed');
+            }
             wp_send_json_success(array(
                 'order_id' => $order->get_id(),
                 'payment_url' => $payment_url
@@ -460,8 +462,33 @@ function handle_create_order() {
             'message' => $e->getMessage()
         ));
     }
+}
 
-    wp_die();
+function generate_fondy_payment_url($order) {
+    $merchant_id = '1551317';
+    $secret_key = 'whNuTCpCJgUSMRyshXEBaqMbKbJWD3IH'; // Replace with your actual secret key
+
+    $payment_data = array(
+        'order_id'      => $order->get_id() . '_' . time(), // Add timestamp to make unique
+        'merchant_id'   => $merchant_id,
+        'order_desc'    => sprintf('Order #%s', $order->get_id()),
+        'amount'        => round($order->get_total() * 100), // Convert to cents
+        'currency'      => 'GEL',
+        'response_url'  => $order->get_checkout_order_received_url(),
+        'server_callback_url' => home_url('/wc-api/fondy-callback'),
+        'lang'          => 'ka'
+    );
+
+    // Generate signature
+    ksort($payment_data);
+    $signature_string = implode('|', $payment_data) . '|' . $secret_key;
+    $signature = hash_hmac('sha256', $signature_string, $secret_key);
+
+    return sprintf(
+        'https://pay.fondy.eu/merchants/%s/default/index.html?token=%s',
+        $merchant_id,
+        $signature
+    );
 }
 
 // Add Store API support for custom checkout fields
