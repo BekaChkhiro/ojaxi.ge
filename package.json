@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "preview": "npm-run-all --parallel sync wpstart tailwindwatch",
-    "sync": "browser-sync start -p 'boilerplate-2024.local' --files '**/*.php' 'build/*.js' 'build/*.css'",
+    "sync": "browser-sync start -p 'ojaxi.local' --files '**/*.php' 'build/*.js' 'build/*.css'",
     "build": "npm-run-all --sequential buildwp tailwindbuild",
     "buildwp": "wp-scripts build",
     "wpstart": "wp-scripts start",
