@@ -126,3 +126,93 @@ function flush_rewrite_rules_on_activation() {
     flush_rewrite_rules();
 }
 add_action('after_switch_theme', 'flush_rewrite_rules_on_activation');
+
+// დავამატოთ WooCommerce-ის გადახდის მეთოდების მხარდაჭერა
+add_action('init', function() {
+    // გავააქტიუროთ WooCommerce-ის გადახდის მეთოდები
+    add_filter('woocommerce_payment_gateways', function($gateways) {
+        return $gateways;
+    });
+});
+
+// დავამატოთ ენდპოინტი გადახდის მეთოდების მისაღებად
+add_action('rest_api_init', function() {
+    register_rest_route('wc/v3', '/available-payment-methods', array(
+        'methods' => 'GET',
+        'callback' => 'get_available_payment_methods',
+        'permission_callback' => '__return_true'
+    ));
+});
+
+function get_available_payment_methods() {
+    $available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+    $payment_methods = array();
+
+    foreach ($available_gateways as $gateway) {
+        if ($gateway->enabled === 'yes') {
+            $payment_methods[] = array(
+                'id' => $gateway->id,
+                'title' => $gateway->title,
+                'description' => $gateway->description,
+                'order' => $gateway->order
+            );
+        }
+    }
+
+    return rest_ensure_response($payment_methods);
+}
+
+// შეკვეთის დამუშავება
+add_action('rest_api_init', function() {
+    register_rest_route('wc/v3', '/process-order', array(
+        'methods' => 'POST',
+        'callback' => 'process_wc_order',
+        'permission_callback' => '__return_true'
+    ));
+});
+
+function process_wc_order($request) {
+    $params = $request->get_params();
+    
+    // შევქმნათ ახალი შეკვეთა
+    $order = wc_create_order();
+    
+    // დავამატოთ პროდუქტები
+    if (!empty($params['line_items'])) {
+        foreach ($params['line_items'] as $item) {
+            $order->add_product(wc_get_product($item['product_id']), $item['quantity']);
+        }
+    }
+    
+    // დავამატოთ billing და shipping ინფორმაცია
+    $order->set_address($params['billing'], 'billing');
+    $order->set_address($params['shipping'], 'shipping');
+    
+    // დავაყენოთ გადახდის მეთოდი
+    $order->set_payment_method($params['payment_method']);
+    
+    // განვაახლოთ ჯამური თანხა
+    $order->calculate_totals();
+    
+    // შევინახოთ შეკვეთა
+    $order->save();
+    
+    // თუ გადახდის მეთოდი არის COD (ადგილზე გადახდა)
+    if ($params['payment_method'] === 'cod') {
+        return rest_ensure_response(array(
+            'result' => 'success',
+            'order_id' => $order->get_id()
+        ));
+    }
+    
+    // სხვა გადახდის მეთოდებისთვის
+    $available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+    $payment_gateway = $available_gateways[$params['payment_method']];
+    
+    if ($payment_gateway) {
+        $result = $payment_gateway->process_payment($order->get_id());
+        return rest_ensure_response($result);
+    }
+    
+    return new WP_Error('payment_error', 'გადახდის მეთოდი ვერ მოიძებნა');
+}
