@@ -433,3 +433,48 @@ function handle_create_order() {
     wp_die();
 }
 
+// Add Store API support for custom checkout fields
+add_filter('woocommerce_store_api_checkout_update_order_from_request', function($order, $request) {
+    // Update phone number
+    if (!empty($request['billing']['phone'])) {
+        $order->update_meta_data('_billing_phone', $request['billing']['phone']);
+    }
+    
+    // Add alternative phone as order note
+    if (!empty($request['customer_note'])) {
+        $order->add_order_note($request['customer_note'], 0, true);
+    }
+    
+    return $order;
+}, 10, 2);
+
+// Add Store API endpoint for Fondy URL
+add_action('rest_api_init', function() {
+    register_rest_route('wc/store', '/checkout/payment-url', array(
+        'methods' => 'GET',
+        'callback' => function($request) {
+            $order_id = $request->get_param('order_id');
+            $payment_url = get_fondy_payment_url($order_id);
+            
+            if (!$payment_url) {
+                return new WP_Error('no_url', 'Payment URL not found', array('status' => 404));
+            }
+            
+            return array('payment_url' => $payment_url);
+        },
+        'permission_callback' => '__return_true'
+    ));
+});
+
+// Enable CORS for Store API
+add_action('rest_api_init', function() {
+    remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
+    add_filter('rest_pre_serve_request', function($value) {
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+        header('Access-Control-Allow-Credentials: true');
+        header('Access-Control-Allow-Headers: Content-Type');
+        return $value;
+    });
+}, 15);
+
