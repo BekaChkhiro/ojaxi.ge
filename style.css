@@ -7,3 +7,66 @@
 /* This file only exists for the sake of WordPress recognizing our theme / theme name etc... */
 
 /* We do not include CSS here and also WordPress will not load this file on the front-end */
+
+/* ჩექაუთის ფორმის სტილები */
+.woocommerce-checkout .entry-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.woocommerce form .form-row {
+    margin-bottom: 1.5em;
+}
+
+.woocommerce form .form-row label {
+    font-weight: 600;
+    margin-bottom: 0.5em;
+    color: #333;
+}
+
+.woocommerce form .form-row input.input-text {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: #f8f8f8;
+}
+
+.woocommerce form .form-row input.input-text:focus {
+    border-color: #666;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+#order_review_heading,
+.woocommerce-billing-fields h3 {
+    font-size: 24px;
+    margin-bottom: 1.5em;
+    color: #333;
+}
+
+#place_order {
+    width: 100%;
+    padding: 1em;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background-color: #2c3338;
+    color: white;
+}
+
+#place_order:hover {
+    background-color: #1a1f24;
+}
+
+/* მობილური ვერსიისთვის */
+@media (max-width: 768px) {
+    .woocommerce-checkout .entry-content {
+        padding: 1rem;
+    }
+    
+    .woocommerce form .form-row {
+        margin-bottom: 1em;
+    }
+}
