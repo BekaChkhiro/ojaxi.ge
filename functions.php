@@ -579,7 +579,7 @@ add_action('wp_enqueue_scripts', 'add_checkout_params', 30);
 
 // Initialize WooCommerce session
 function init_wc_session() {
-    if (!is_admin() && !WC()->session) {
+    if (!is_admin() && !WC()->session && function_exists('WC')) {
         WC()->session = new WC_Session_Handler();
         WC()->session->init();
     }
