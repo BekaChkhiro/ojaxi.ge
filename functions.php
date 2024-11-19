@@ -162,12 +162,43 @@ function get_fondy_payment_url($order_id) {
     $order = wc_get_order($order_id);
     if (!$order) return false;
 
-    // მივიღოთ Fondy-ის მერჩანტის ID და token
-    $payment_data = $order->get_meta('_fondy_payment_data');
-    if (empty($payment_data)) return false;
+    // Fondy configuration
+    $merchant_id = '5ad6b888f4becb0c33d543d54e57d86c';
+    $secret_key = 'YOUR_SECRET_KEY'; // Replace with your actual secret key
 
-    $data = maybe_unserialize($payment_data);
-    return isset($data['payment_url']) ? $data['payment_url'] : false;
+    // Order data
+    $amount = $order->get_total() * 100; // Convert to cents
+    $order_desc = sprintf('Order #%s from %s %s', 
+        $order->get_order_number(),
+        $order->get_billing_first_name(),
+        $order->get_billing_last_name()
+    );
+
+    // Payment data
+    $payment_data = array(
+        'order_id'    => $order_id,
+        'merchant_id' => $merchant_id,
+        'order_desc'  => $order_desc,
+        'amount'      => $amount,
+        'currency'    => 'GEL',
+        'server_callback_url' => home_url('/wc-api/fondy-callback'),
+        'response_url'        => $order->get_checkout_order_received_url(),
+        'sender_email'        => $order->get_billing_email()
+    );
+
+    // Generate signature
+    ksort($payment_data);
+    $signature = '';
+    foreach ($payment_data as $key => $value) {
+        $signature .= $value . '|';
+    }
+    $signature = substr($signature, 0, -1);
+    $signature = hash_hmac('sha256', $signature, $secret_key);
+
+    $payment_data['signature'] = $signature;
+
+    // Generate payment URL
+    return 'https://pay.fondy.eu/merchants/' . $merchant_id . '/default/index.html?token=' . $signature;
 }
 
 // დავამატოთ REST API endpoint Fondy-ის URL-ის მისაღებად
