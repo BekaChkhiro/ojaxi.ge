@@ -223,25 +223,32 @@ add_action('rest_api_init', function() {
 
 // Allow orders to be created without authentication
 add_filter('woocommerce_rest_check_permissions', function($permission, $context, $object_id, $post_type) {
-    if ($post_type === 'shop_order') {
+    if ($post_type === 'shop_order' && $context === 'create') {
         return true;
     }
     return $permission;
 }, 10, 4);
 
-// Add CORS headers for API requests
+// Add nonce verification bypass for order creation
+add_filter('woocommerce_rest_nonce_check_permission', function($permission) {
+    if (strpos($_SERVER['REQUEST_URI'], '/wp-json/wc/v2/orders') !== false) {
+        return true;
+    }
+    return $permission;
+});
+
+// Add proper CORS headers
 add_action('rest_api_init', function() {
     remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
     add_filter('rest_pre_serve_request', function($value) {
         $origin = get_home_url();
         
-        header("Access-Control-Allow-Origin: $origin");
-        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE');
         header('Access-Control-Allow-Credentials: true');
-        header('Access-Control-Expose-Headers: Link');
-        header('Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization');
+        header('Access-Control-Allow-Headers: Authorization, Content-Type, X-Requested-With');
         
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        if ('OPTIONS' === $_SERVER['REQUEST_METHOD']) {
             status_header(200);
             exit();
         }
@@ -249,6 +256,19 @@ add_action('rest_api_init', function() {
         return $value;
     });
 }, 15);
+
+// Add debugging for order creation
+add_action('rest_api_init', function() {
+    register_rest_route('wc/v2', '/debug-order', array(
+        'methods' => 'POST',
+        'callback' => function($request) {
+            $parameters = $request->get_params();
+            error_log('Order Creation Debug: ' . print_r($parameters, true));
+            return new WP_REST_Response(array('status' => 'logged'), 200);
+        },
+        'permission_callback' => '__return_true'
+    ));
+});
 
 // Add WooCommerce support
 function mytheme_add_woocommerce_support() {
