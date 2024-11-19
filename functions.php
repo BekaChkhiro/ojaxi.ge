@@ -670,3 +670,56 @@ function handle_custom_checkout($request) {
 
     return new WP_Error('payment-error', 'Payment processing failed');
 }
+
+// Initialize WooCommerce
+function init_woocommerce() {
+    // Load cart functions
+    if (!function_exists('WC')) {
+        return;
+    }
+
+    if (!WC()->cart) {
+        WC()->cart = new WC_Cart();
+    }
+
+    if (!WC()->session) {
+        WC()->session = new WC_Session_Handler();
+        WC()->session->init();
+    }
+
+    if (!WC()->customer) {
+        WC()->customer = new WC_Customer(get_current_user_id(), true);
+    }
+}
+add_action('init', 'init_woocommerce', 0);
+
+// Add WooCommerce support
+function add_woocommerce_support() {
+    add_theme_support('woocommerce');
+    add_theme_support('wc-product-gallery-zoom');
+    add_theme_support('wc-product-gallery-lightbox');
+    add_theme_support('wc-product-gallery-slider');
+}
+add_action('after_setup_theme', 'add_woocommerce_support');
+
+// Load WooCommerce scripts
+function load_woocommerce_scripts() {
+    if (!is_admin()) {
+        wp_enqueue_script('wc-cart-fragments');
+        wp_enqueue_script('woocommerce');
+        wp_enqueue_script('wc-checkout');
+        
+        wp_localize_script('wc-checkout', 'wc_checkout_params', array(
+            'ajax_url' => WC()->ajax_url(),
+            'wc_ajax_url' => WC_AJAX::get_endpoint('%%endpoint%%')
+        ));
+    }
+}
+add_action('wp_enqueue_scripts', 'load_woocommerce_scripts');
+
+// Add CORS headers
+add_action('init', function() {
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+    header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
+});
