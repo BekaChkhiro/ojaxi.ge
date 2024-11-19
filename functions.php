@@ -250,3 +250,60 @@ add_action('rest_api_init', function() {
         return $value;
     });
 }, 15);
+
+// Add WooCommerce support
+function mytheme_add_woocommerce_support() {
+    add_theme_support('woocommerce');
+    add_theme_support('wc-product-gallery-zoom');
+    add_theme_support('wc-product-gallery-lightbox');
+    add_theme_support('wc-product-gallery-slider');
+}
+add_action('after_setup_theme', 'mytheme_add_woocommerce_support');
+
+// Make sure WooCommerce templates are loaded
+function mytheme_woocommerce_templates($template) {
+    if (is_checkout() || is_order_pay_page()) {
+        return WC()->plugin_path() . '/templates/checkout/form-checkout.php';
+    }
+    return $template;
+}
+add_filter('template_include', 'mytheme_woocommerce_templates', 999);
+
+// Remove custom checkout template for WooCommerce pages
+function mytheme_remove_react_template($template, $template_name, $template_path) {
+    if (is_checkout() || is_order_pay_page()) {
+        return $template;
+    }
+    return $template;
+}
+add_filter('woocommerce_locate_template', 'mytheme_remove_react_template', 10, 3);
+
+// Make sure payment gateways are loaded
+function mytheme_init_gateway() {
+    if (class_exists('WC_Payment_Gateways')) {
+        $gateways = WC()->payment_gateways->payment_gateways();
+    }
+}
+add_action('init', 'mytheme_init_gateway');
+
+// Load WooCommerce scripts and styles
+function mytheme_enqueue_woocommerce() {
+    if (is_checkout() || is_order_pay_page()) {
+        wp_enqueue_script('wc-checkout');
+        wp_enqueue_script('wc-cart-fragments');
+        wp_enqueue_script('woocommerce');
+        wp_enqueue_style('woocommerce-general');
+    }
+}
+add_action('wp_enqueue_scripts', 'mytheme_enqueue_woocommerce');
+
+// Add body classes
+function mytheme_add_body_class($classes) {
+    if (is_checkout() || is_order_pay_page()) {
+        $classes[] = 'woocommerce-checkout';
+        $classes[] = 'woocommerce-page';
+    }
+    return $classes;
+}
+add_filter('body_class', 'mytheme_add_body_class');
+
