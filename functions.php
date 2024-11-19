@@ -237,22 +237,30 @@ add_action('rest_api_init', function() {
     // Add CORS headers for WooCommerce Store API
     add_filter('rest_pre_serve_request', function($served, $result, $request) {
         if (strpos($request->get_route(), '/wc/store/') !== false) {
-            header('Access-Control-Allow-Origin: ' . esc_url_raw(site_url()));
+            header('Access-Control-Allow-Origin: *');
             header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
             header('Access-Control-Allow-Credentials: true');
-            header('Access-Control-Allow-Headers: Authorization, X-WC-Store-API-Nonce, Content-Type');
+            header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WC-Store-API-Nonce');
         }
         return $served;
     }, 10, 3);
 });
 
-// Allow WooCommerce Store API access
+// Disable nonce verification for Store API
 add_filter('woocommerce_store_api_disable_nonce_check', '__return_true');
 
-// Add nonce to React app
+// Add Store API nonce to React app
 function add_wc_store_api_nonce() {
     wp_localize_script('react-app', 'wcStoreApiSettings', array(
-        'nonce' => wp_create_nonce('wc_store_api'),
+        'nonce' => wp_create_nonce('wc_store_api')
     ));
 }
 add_action('wp_enqueue_scripts', 'add_wc_store_api_nonce');
+
+// Allow Store API access
+add_filter('woocommerce_rest_check_permissions', function($permission, $context, $object_id, $post_type){
+    if (strpos($_SERVER['REQUEST_URI'], '/wc/store/') !== false) {
+        return true;
+    }
+    return $permission;
+}, 10, 4);
