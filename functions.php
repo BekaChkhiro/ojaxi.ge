@@ -1,10 +1,7 @@
 <?php
-
 function load_react_styles_scripts() {
-    // CSS
     wp_enqueue_style('tailwind-styles', get_theme_file_uri('/build/index.css'));
     
-    // JavaScript
     wp_enqueue_script('react', 'https://unpkg.com/react@18/umd/react.development.js', array(), '18', true);
     wp_enqueue_script('react-dom', 'https://unpkg.com/react-dom@18/umd/react-dom.development.js', array('react'), '18', true);
     wp_enqueue_script('react-app', get_theme_file_uri('/build/index.js'), array('react', 'react-dom'), '1.0', true);
@@ -16,11 +13,57 @@ function load_react_styles_scripts() {
 }
 add_action('wp_enqueue_scripts', 'load_react_styles_scripts');
 
-function add_google_verification() {
-    echo '<meta name="google-site-verification" content="PJVPfFFKyO0MVEry9TD8Rk_mP2BWIaR0qDGlG09IH3A" />' . "\n";
-}
-add_action('wp_head', 'add_google_verification');
+// Fondy Integration
+add_action('rest_api_init', function () {
+    register_rest_route('fondy/v1', '/checkout', array(
+        'methods' => 'POST',
+        'callback' => 'handle_fondy_checkout',
+        'permission_callback' => '__return_true'
+    ));
+});
 
+function handle_fondy_checkout($request) {
+    $params = $request->get_params();
+    
+    $secretKey = 'whNuTCpCJgUSMRyshXEBaqMbKbJWD3IH';
+    
+    $signatureParams = array(
+        'merchant_id' => $params['merchant_id'],
+        'order_id' => $params['order_id'],
+        'order_desc' => $params['order_desc'],
+        'amount' => $params['amount'],
+        'currency' => $params['currency']
+    );
+    ksort($signatureParams);
+    $signature = hash_hmac('sha256', implode('|', $signatureParams), $secretKey);
+    
+    $fondyData = array(
+        'request' => array_merge($signatureParams, array(
+            'signature' => $signature
+        ))
+    );
+    
+    $response = wp_remote_post('https://pay.fondy.eu/api/checkout/url/', array(
+        'body' => json_encode($fondyData),
+        'headers' => array('Content-Type' => 'application/json'),
+    ));
+    
+    if (is_wp_error($response)) {
+        return new WP_Error('fondy_error', 'Failed to connect to Fondy', array('status' => 500));
+    }
+    
+    $body = json_decode(wp_remote_retrieve_body($response), true);
+    
+    if (empty($body['response']['checkout_url'])) {
+        return new WP_Error('fondy_error', 'Invalid response from Fondy', array('status' => 500));
+    }
+    
+    return new WP_REST_Response(array(
+        'checkout_url' => $body['response']['checkout_url']
+    ), 200);
+}
+
+// Existing WordPress configurations
 add_action('init', function() {
     add_filter('rest_authentication_errors', function($result) {
         if (true === $result || is_wp_error($result)) {
@@ -56,7 +99,6 @@ add_action('init', function() {
 
 add_filter('woocommerce_rest_check_permissions', '__return_true');
 
-// Add custom rewrite rules
 function add_custom_rewrite_rules() {
     add_rewrite_rule(
         'product/([^/]+)/?$',
@@ -66,7 +108,6 @@ function add_custom_rewrite_rules() {
 }
 add_action('init', 'add_custom_rewrite_rules');
 
-// გამორთეთ WooCommerce-ის სტანდარტული თემფლეითი
 add_filter('woocommerce_template_loader_files', function($files, $template) {
     if ($template === 'single-product.php') {
         return array(get_theme_file_path('react-template.php'));
@@ -74,11 +115,9 @@ add_filter('woocommerce_template_loader_files', function($files, $template) {
     return $files;
 }, 10, 2);
 
-// React-ის თემფლეითის ჩატვირთვა
 function load_react_template($template) {
     global $post;
     
-    // Check if this is a product page or preview
     if ($post && $post->post_type === 'product') {
         return get_theme_file_path('react-template.php');
     }
@@ -87,11 +126,9 @@ function load_react_template($template) {
 }
 add_filter('template_include', 'load_react_template', 999);
 
-// პროდუქტის ID-ის გადაცემა React-ისთვის
 function add_product_data() {
     global $post;
     
-    // Check if this is a product page or preview
     if ($post && $post->post_type === 'product') {
         wp_localize_script('react-app', 'wpProductData', array(
             'product_id' => $post->ID,
@@ -102,7 +139,6 @@ function add_product_data() {
 }
 add_action('wp_enqueue_scripts', 'add_product_data');
 
-// Modify product permalinks
 function modify_product_permalink($permalink, $post) {
     if ($post->post_type === 'product') {
         return home_url('/product/' . $post->post_name);
@@ -111,7 +147,6 @@ function modify_product_permalink($permalink, $post) {
 }
 add_filter('post_type_link', 'modify_product_permalink', 10, 2);
 
-// Handle view/preview links in admin
 function modify_product_preview_link($preview_link, $post) {
     if ($post->post_type === 'product') {
         return home_url('/product/' . $post->post_name . '?preview=true');
@@ -120,7 +155,6 @@ function modify_product_preview_link($preview_link, $post) {
 }
 add_filter('preview_post_link', 'modify_product_preview_link', 10, 2);
 
-// Flush rewrite rules on theme activation
 function flush_rewrite_rules_on_activation() {
     add_custom_rewrite_rules();
     flush_rewrite_rules();
