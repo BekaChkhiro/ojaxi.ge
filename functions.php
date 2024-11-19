@@ -157,3 +157,34 @@ function is_order_pay_page() {
     return (isset($wp->query_vars['order-pay']) || 
             (isset($_GET['pay_for_order']) && isset($_GET['key'])));
 }
+
+// დავამატოთ Fondy-ის გადახდის URL-ის მიღების ფუნქცია
+function get_fondy_payment_url($order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order) return false;
+
+    // მივიღოთ Fondy-ის მერჩანტის ID და token
+    $payment_data = $order->get_meta('_fondy_payment_data');
+    if (empty($payment_data)) return false;
+
+    $data = maybe_unserialize($payment_data);
+    return isset($data['payment_url']) ? $data['payment_url'] : false;
+}
+
+// დავამატოთ REST API endpoint Fondy-ის URL-ის მისაღებად
+add_action('rest_api_init', function() {
+    register_rest_route('wc/v2', '/orders/(?P<id>\d+)/fondy-url', array(
+        'methods' => 'GET',
+        'callback' => function($request) {
+            $order_id = $request->get_param('id');
+            $payment_url = get_fondy_payment_url($order_id);
+            
+            if (!$payment_url) {
+                return new WP_Error('no_url', 'Payment URL not found', array('status' => 404));
+            }
+            
+            return array('payment_url' => $payment_url);
+        },
+        'permission_callback' => '__return_true'
+    ));
+});
