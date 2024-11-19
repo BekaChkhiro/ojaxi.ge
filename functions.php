@@ -188,3 +188,65 @@ add_action('rest_api_init', function() {
         'permission_callback' => '__return_true'
     ));
 });
+
+// Add REST API endpoint for Fondy payment URL
+add_action('rest_api_init', function() {
+    register_rest_route('wc/v2', '/orders/(?P<id>\d+)/fondy-url', array(
+        'methods' => 'GET',
+        'callback' => function($request) {
+            $order_id = $request->get_param('id');
+            $order = wc_get_order($order_id);
+            
+            if (!$order) {
+                return new WP_Error('no_order', 'Order not found', array('status' => 404));
+            }
+            
+            // Get Fondy payment data
+            $payment_data = $order->get_meta('_fondy_payment_data');
+            if (empty($payment_data)) {
+                return new WP_Error('no_payment_data', 'Fondy payment data not found', array('status' => 404));
+            }
+            
+            $data = maybe_unserialize($payment_data);
+            $payment_url = isset($data['payment_url']) ? $data['payment_url'] : false;
+            
+            if (!$payment_url) {
+                return new WP_Error('no_payment_url', 'Fondy payment URL not found', array('status' => 404));
+            }
+            
+            return array(
+                'payment_url' => $payment_url
+            );
+        },
+        'permission_callback' => '__return_true'
+    ));
+});
+
+// Allow orders to be created without authentication
+add_filter('woocommerce_rest_check_permissions', function($permission, $context, $object_id, $post_type) {
+    if ($post_type === 'shop_order') {
+        return true;
+    }
+    return $permission;
+}, 10, 4);
+
+// Add CORS headers for API requests
+add_action('rest_api_init', function() {
+    remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
+    add_filter('rest_pre_serve_request', function($value) {
+        $origin = get_home_url();
+        
+        header("Access-Control-Allow-Origin: $origin");
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Credentials: true');
+        header('Access-Control-Expose-Headers: Link');
+        header('Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization');
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            status_header(200);
+            exit();
+        }
+        
+        return $value;
+    });
+}, 15);
