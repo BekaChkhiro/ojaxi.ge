@@ -264,3 +264,9 @@ add_filter('woocommerce_rest_check_permissions', function($permission, $context,
     }
     return $permission;
 }, 10, 4);
+
+add_action('wp_enqueue_scripts', function() {
+    wp_localize_script('react-app', 'wcStoreApiSettings', array(
+        'nonce' => wp_create_nonce('wc_store_api')
+    ));
+});
