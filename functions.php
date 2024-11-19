@@ -82,6 +82,11 @@ add_action('init', 'add_custom_rewrite_rules');
 
 // გამორთეთ WooCommerce-ის სტანდარტული თემფლეითი
 add_filter('woocommerce_template_loader_files', function($files, $template) {
+    // გამოვრიცხოთ checkout გვერდები
+    if (is_checkout() || is_order_pay_page()) {
+        return $files;
+    }
+    
     if ($template === 'single-product.php') {
         return array(get_theme_file_path('react-template.php'));
     }
@@ -91,6 +96,11 @@ add_filter('woocommerce_template_loader_files', function($files, $template) {
 // React-ის თემფლეითის ჩატვირთვა
 function load_react_template($template) {
     global $post;
+    
+    // გამოვრიცხოთ checkout გვერდები
+    if (is_checkout() || is_order_pay_page()) {
+        return $template;
+    }
     
     // Check if this is a product page or preview
     if ($post && $post->post_type === 'product') {
@@ -140,3 +150,10 @@ function flush_rewrite_rules_on_activation() {
     flush_rewrite_rules();
 }
 add_action('after_switch_theme', 'flush_rewrite_rules_on_activation');
+
+// დავამატოთ ფუნქცია checkout გვერდის შესამოწმებლად
+function is_order_pay_page() {
+    global $wp;
+    return (isset($wp->query_vars['order-pay']) || 
+            (isset($_GET['pay_for_order']) && isset($_GET['key'])));
+}
