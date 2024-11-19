@@ -465,7 +465,7 @@ function handle_create_order() {
 }
 
 function generate_fondy_payment_url($order) {
-    $merchant_id = '1551317';
+    $merchant_id = '5ad6b888f4becb0c33d543d54e57d86c';
     $secret_key = 'whNuTCpCJgUSMRyshXEBaqMbKbJWD3IH'; // Replace with your actual secret key
 
     $payment_data = array(
