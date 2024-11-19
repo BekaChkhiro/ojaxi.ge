@@ -161,89 +161,73 @@ function flush_rewrite_rules_on_activation() {
 }
 add_action('after_switch_theme', 'flush_rewrite_rules_on_activation');
 
-// Add WooCommerce support
+// Add WooCommerce support with full features
 function mytheme_add_woocommerce_support() {
-    add_theme_support('woocommerce');
+    add_theme_support('woocommerce', array(
+        'thumbnail_image_width' => 150,
+        'single_image_width'    => 300,
+        'product_grid'          => array(
+            'default_rows'    => 3,
+            'min_rows'        => 2,
+            'max_rows'        => 8,
+            'default_columns' => 4,
+            'min_columns'     => 2,
+            'max_columns'     => 5,
+        ),
+    ));
+    
+    // Add support for WooCommerce features
+    add_theme_support('wc-product-gallery-zoom');
+    add_theme_support('wc-product-gallery-lightbox');
+    add_theme_support('wc-product-gallery-slider');
 }
 add_action('after_setup_theme', 'mytheme_add_woocommerce_support');
 
-// Copy WooCommerce templates
-function copy_woocommerce_templates() {
-    $theme_dir = get_template_directory();
-    if (!file_exists($theme_dir . '/woocommerce')) {
-        mkdir($theme_dir . '/woocommerce', 0755);
-    }
-    
-    // Copy checkout template
-    if (!file_exists($theme_dir . '/woocommerce/checkout')) {
-        mkdir($theme_dir . '/woocommerce/checkout', 0755);
-    }
-    
-    // Create checkout form template if it doesn't exist
-    $checkout_form = $theme_dir . '/woocommerce/checkout/form-checkout.php';
-    if (!file_exists($checkout_form)) {
-        $template_content = '<?php
-/**
- * Checkout Form
- */
-
-if (!defined("ABSPATH")) {
-    exit;
-}
-
-do_action("woocommerce_before_checkout_form", $checkout);
-
-// If checkout registration is disabled and not logged in, the user cannot checkout.
-if (!$checkout->is_registration_enabled() && $checkout->is_registration_required() && !is_user_logged_in()) {
-    echo esc_html(apply_filters("woocommerce_checkout_must_be_logged_in_message", __("You must be logged in to checkout.", "woocommerce")));
-    return;
-}
-?>
-
-<form name="checkout" method="post" class="checkout woocommerce-checkout" action="<?php echo esc_url(wc_get_checkout_url()); ?>" enctype="multipart/form-data">
-
-    <?php if ($checkout->get_checkout_fields()) : ?>
-
-        <?php do_action("woocommerce_checkout_before_customer_details"); ?>
-
-        <div class="col2-set" id="customer_details">
-            <div class="col-1">
-                <?php do_action("woocommerce_checkout_billing"); ?>
-            </div>
-
-            <div class="col-2">
-                <?php do_action("woocommerce_checkout_shipping"); ?>
-            </div>
-        </div>
-
-        <?php do_action("woocommerce_checkout_after_customer_details"); ?>
-
-    <?php endif; ?>
-
-    <?php do_action("woocommerce_checkout_before_order_review_heading"); ?>
-
-    <h3 id="order_review_heading"><?php esc_html_e("Your order", "woocommerce"); ?></h3>
-
-    <?php do_action("woocommerce_checkout_before_order_review"); ?>
-
-    <div id="order_review" class="woocommerce-checkout-review-order">
-        <?php do_action("woocommerce_checkout_order_review"); ?>
-    </div>
-
-    <?php do_action("woocommerce_checkout_after_order_review"); ?>
-
-</form>
-
-<?php do_action("woocommerce_after_checkout_form", $checkout); ?>';
-
-        file_put_contents($checkout_form, $template_content);
+// Ensure WooCommerce templates are loaded
+function ensure_woocommerce_templates() {
+    if (class_exists('WooCommerce')) {
+        if (!file_exists(get_stylesheet_directory() . '/woocommerce')) {
+            mkdir(get_stylesheet_directory() . '/woocommerce', 0755);
+        }
+        
+        // Copy WooCommerce templates from plugin to theme
+        $wc_template_path = WC()->plugin_path() . '/templates/';
+        $theme_template_path = get_stylesheet_directory() . '/woocommerce/';
+        
+        // Ensure checkout directory exists
+        if (!file_exists($theme_template_path . 'checkout')) {
+            mkdir($theme_template_path . 'checkout', 0755, true);
+        }
+        
+        // Copy checkout form template
+        if (!file_exists($theme_template_path . 'checkout/form-checkout.php')) {
+            copy($wc_template_path . 'checkout/form-checkout.php', $theme_template_path . 'checkout/form-checkout.php');
+        }
     }
 }
-add_action('after_switch_theme', 'copy_woocommerce_templates');
+add_action('after_switch_theme', 'ensure_woocommerce_templates');
 
-// Ensure checkout endpoint works
-function custom_add_checkout_endpoint() {
+// Add checkout endpoint and page
+function setup_checkout_page() {
+    // Add checkout endpoint
     add_rewrite_endpoint('checkout', EP_PAGES);
+    
+    // Create checkout page if it doesn't exist
+    $checkout_page = get_page_by_path('checkout');
+    if (!$checkout_page) {
+        $page_data = array(
+            'post_status'    => 'publish',
+            'post_type'      => 'page',
+            'post_author'    => 1,
+            'post_name'      => 'checkout',
+            'post_title'     => 'Checkout',
+            'post_content'   => '[woocommerce_checkout]',
+            'post_parent'    => 0,
+            'comment_status' => 'closed'
+        );
+        wp_insert_post($page_data);
+    }
+    
     flush_rewrite_rules();
 }
-add_action('init', 'custom_add_checkout_endpoint');
+add_action('init', 'setup_checkout_page');
