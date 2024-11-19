@@ -23,6 +23,10 @@ add_action('wp_head', 'add_google_verification');
 
 add_action('init', function() {
     add_filter('rest_authentication_errors', function($result) {
+        if (strpos($_SERVER['REQUEST_URI'], '/wp-json/wc/v2/orders') !== false) {
+            return null;
+        }
+        
         if (true === $result || is_wp_error($result)) {
             return $result;
         }
@@ -38,19 +42,29 @@ add_action('init', function() {
 add_action('rest_api_init', function() {
     remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
     add_filter('rest_pre_serve_request', function($value) {
-        header('Access-Control-Allow-Origin: *');
+        $origin = get_home_url();
+        
+        header("Access-Control-Allow-Origin: $origin");
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
         header('Access-Control-Allow-Credentials: true');
         header('Access-Control-Expose-Headers: Link');
         header('Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization');
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            status_header(200);
+            exit();
+        }
         
         return $value;
     });
 }, 15);
 
 add_action('init', function() {
-    add_filter('woocommerce_rest_check_permissions', function($permission, $context, $object_id, $post_type){
-        return true;
+    add_filter('woocommerce_rest_check_permissions', function($permission, $context, $object_id, $post_type) {
+        if ($post_type === 'shop_order') {
+            return true;
+        }
+        return $permission;
     }, 10, 4);
 });
 
