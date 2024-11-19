@@ -610,3 +610,63 @@ add_action('woocommerce_checkout_process', function() {
         wp_die('Security check failed');
     }
 });
+
+// Add custom endpoint for checkout
+add_action('rest_api_init', function() {
+    register_rest_route('wc/v3', '/process-checkout', array(
+        'methods' => 'POST',
+        'callback' => 'handle_custom_checkout',
+        'permission_callback' => '__return_true'
+    ));
+});
+
+function handle_custom_checkout($request) {
+    // Initialize WC session if not exists
+    if (!WC()->session) {
+        WC()->session = new WC_Session_Handler();
+        WC()->session->init();
+    }
+
+    // Initialize cart if empty
+    if (WC()->cart->is_empty()) {
+        $cart_items = $request->get_param('cart_items');
+        foreach ($cart_items as $item) {
+            WC()->cart->add_to_cart($item['id'], $item['quantity']);
+        }
+    }
+
+    // Create order
+    $checkout = WC()->checkout();
+    $order_id = $checkout->create_order(array(
+        'billing_first_name' => $request->get_param('firstName'),
+        'billing_last_name'  => $request->get_param('lastName'),
+        'billing_phone'      => $request->get_param('phone'),
+        'billing_address_1'  => $request->get_param('address'),
+        'billing_city'       => $request->get_param('city'),
+        'billing_country'    => 'GE',
+        'payment_method'     => $request->get_param('paymentMethod')
+    ));
+
+    if (is_wp_error($order_id)) {
+        return new WP_Error('checkout-error', $order_id->get_error_message());
+    }
+
+    $order = wc_get_order($order_id);
+    
+    // Process payment
+    $available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+    $payment_method = $request->get_param('paymentMethod');
+
+    if (isset($available_gateways[$payment_method])) {
+        $result = $available_gateways[$payment_method]->process_payment($order_id);
+        
+        if ($result['result'] === 'success') {
+            return array(
+                'success' => true,
+                'redirect' => $result['redirect']
+            );
+        }
+    }
+
+    return new WP_Error('payment-error', 'Payment processing failed');
+}
