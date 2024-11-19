@@ -231,3 +231,28 @@ function setup_checkout_page() {
     flush_rewrite_rules();
 }
 add_action('init', 'setup_checkout_page');
+
+// Add this to your existing functions.php
+add_action('rest_api_init', function() {
+    // Add CORS headers for WooCommerce Store API
+    add_filter('rest_pre_serve_request', function($served, $result, $request) {
+        if (strpos($request->get_route(), '/wc/store/') !== false) {
+            header('Access-Control-Allow-Origin: ' . esc_url_raw(site_url()));
+            header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Allow-Headers: Authorization, X-WP-Nonce, Content-Type');
+        }
+        return $served;
+    }, 10, 3);
+});
+
+// Allow WooCommerce Store API access
+add_filter('woocommerce_store_api_disable_nonce_check', '__return_true');
+
+// Add nonce to React app
+function add_wc_store_api_nonce() {
+    wp_localize_script('react-app', 'wcStoreApiSettings', array(
+        'nonce' => wp_create_nonce('wc_store_api'),
+    ));
+}
+add_action('wp_enqueue_scripts', 'add_wc_store_api_nonce');
