@@ -1,18 +1,17 @@
 <?php
 
 function load_react_styles_scripts() {
-    // CSS
-    wp_enqueue_style('tailwind-styles', get_theme_file_uri('/build/index.css'));
-    
-    // JavaScript
-    wp_enqueue_script('react', 'https://unpkg.com/react@18/umd/react.development.js', array(), '18', true);
-    wp_enqueue_script('react-dom', 'https://unpkg.com/react-dom@18/umd/react-dom.development.js', array('react'), '18', true);
-    wp_enqueue_script('react-app', get_theme_file_uri('/build/index.js'), array('react', 'react-dom'), '1.0', true);
-    
-    wp_localize_script('react-app', 'wpApiSettings', array(
-        'root' => esc_url_raw(rest_url()),
-        'nonce' => wp_create_nonce('wp_rest')
-    ));
+    if (!is_checkout() && !is_order_pay_page()) {
+        wp_enqueue_style('tailwind-styles', get_theme_file_uri('/build/index.css'));
+        wp_enqueue_script('react', 'https://unpkg.com/react@18/umd/react.development.js', array(), '18', true);
+        wp_enqueue_script('react-dom', 'https://unpkg.com/react-dom@18/umd/react-dom.development.js', array('react'), '18', true);
+        wp_enqueue_script('react-app', get_theme_file_uri('/build/index.js'), array('react', 'react-dom'), '1.0', true);
+        
+        wp_localize_script('react-app', 'wpApiSettings', array(
+            'root' => esc_url_raw(rest_url()),
+            'nonce' => wp_create_nonce('wp_rest')
+        ));
+    }
 }
 add_action('wp_enqueue_scripts', 'load_react_styles_scripts');
 
@@ -262,9 +261,18 @@ add_action('after_setup_theme', 'mytheme_add_woocommerce_support');
 
 // Make sure WooCommerce templates are loaded
 function mytheme_woocommerce_templates($template) {
-    if (is_checkout() || is_order_pay_page()) {
+    if (is_checkout()) {
         return WC()->plugin_path() . '/templates/checkout/form-checkout.php';
+    } elseif (is_order_pay_page()) {
+        return WC()->plugin_path() . '/templates/checkout/form-pay.php';
     }
+    
+    // Handle React template for product pages
+    global $post;
+    if (!is_checkout() && !is_order_pay_page() && $post && $post->post_type === 'product') {
+        return get_theme_file_path('react-template.php');
+    }
+    
     return $template;
 }
 add_filter('template_include', 'mytheme_woocommerce_templates', 999);
@@ -289,13 +297,16 @@ add_action('init', 'mytheme_init_gateway');
 // Load WooCommerce scripts and styles
 function mytheme_enqueue_woocommerce() {
     if (is_checkout() || is_order_pay_page()) {
+        wp_enqueue_script('jquery');
         wp_enqueue_script('wc-checkout');
         wp_enqueue_script('wc-cart-fragments');
         wp_enqueue_script('woocommerce');
         wp_enqueue_style('woocommerce-general');
+        wp_enqueue_style('woocommerce-layout');
+        wp_enqueue_style('woocommerce-smallscreen');
     }
 }
-add_action('wp_enqueue_scripts', 'mytheme_enqueue_woocommerce');
+add_action('wp_enqueue_scripts', 'mytheme_enqueue_woocommerce', 20);
 
 // Add body classes
 function mytheme_add_body_class($classes) {
@@ -306,4 +317,27 @@ function mytheme_add_body_class($classes) {
     return $classes;
 }
 add_filter('body_class', 'mytheme_add_body_class');
+
+// Ensure WooCommerce templates are used for checkout
+function mytheme_use_wc_templates($located, $template_name, $args, $template_path, $default_path) {
+    if (is_checkout() || is_order_pay_page()) {
+        $default_path = WC()->plugin_path() . '/templates/';
+        $new_located = locate_template(
+            array(
+                trailingslashit($template_path) . $template_name,
+                $template_name
+            )
+        );
+        
+        if (!$new_located) {
+            $new_located = $default_path . $template_name;
+        }
+        
+        if (file_exists($new_located)) {
+            return $new_located;
+        }
+    }
+    return $located;
+}
+add_filter('wc_get_template', 'mytheme_use_wc_templates', 10, 5);
 
