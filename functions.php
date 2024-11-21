@@ -309,3 +309,33 @@ function custom_override_checkout_fields($fields) {
     return $fields;
 }
 
+// კუპონის ფორმის გათიშვა
+remove_action('woocommerce_before_checkout_form', 'woocommerce_checkout_coupon_form', 10);
+
+// შეკვეთის დეტალების დამალვა
+add_filter('woocommerce_cart_item_visible', '__return_false');
+add_filter('woocommerce_cart_item_class', '__return_false');
+
+// შეკვეთის ჯამური თანხის სექციის მოდიფიკაცია
+add_filter('woocommerce_checkout_cart_item_visible', '__return_false');
+
+// დამატებითი სტილები რომ დავმალოთ პროდუქტების ცხრილი
+add_action('wp_head', 'custom_checkout_css');
+function custom_checkout_css() {
+    if (is_checkout()) {
+        ?>
+        <style>
+            .woocommerce-checkout-review-order-table thead,
+            .woocommerce-checkout-review-order-table tbody {
+                display: none !important;
+            }
+            .woocommerce-checkout-review-order-table tfoot tr:not(:last-child) {
+                display: none !important;
+            }
+        </style>
+        <?php
+    }
+}
+
+remove_action('woocommerce_checkout_order_review', 'woocommerce_order_review', 10);
+
