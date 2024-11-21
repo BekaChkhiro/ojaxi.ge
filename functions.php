@@ -288,7 +288,6 @@ function custom_override_checkout_fields($fields) {
     $fields['billing']['billing_phone']['label'] = 'ტელეფონი';
     $fields['billing']['billing_phone']['priority'] = 20;
     
-    // დავამატოთ ალტერნატიული ტელეფონი
     $fields['billing']['billing_phone_alt'] = array(
         'label' => 'ალტერნატიული ტელეფონი',
         'required' => false,
@@ -302,9 +301,11 @@ function custom_override_checkout_fields($fields) {
     
     $fields['billing']['billing_city']['label'] = 'ქალაქი';
     $fields['billing']['billing_city']['priority'] = 40;
+    $fields['billing']['billing_city']['required'] = true;
     
     $fields['billing']['billing_address_1']['label'] = 'მისამართი';
     $fields['billing']['billing_address_1']['priority'] = 50;
+    $fields['billing']['billing_address_1']['required'] = true;
     
     return $fields;
 }
