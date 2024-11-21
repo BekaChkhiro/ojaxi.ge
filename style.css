@@ -124,3 +124,71 @@
     color: #999;
     opacity: 0.7;
 }
+
+/* ჩექაუთის კონტეინერის სტილი */
+.custom-checkout-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ფორმის ველების სტილი */
+.woocommerce form .form-row input.input-text,
+.woocommerce form .form-row textarea {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    font-size: 16px;
+    width: 100%;
+}
+
+/* სათაურების სტილი */
+.billing-form h2,
+.order-review h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* შეკვეთის ღილაკის სტილი */
+#place_order {
+    background-color: #007bff;
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#place_order:hover {
+    background-color: #0056b3;
+}
+
+/* შეკვეთის მიმოხილვის ცხრილის სტილი */
+.woocommerce-checkout-review-order-table {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 4px;
+}
+
+/* ველების ლეიბლების სტილი */
+.woocommerce form .form-row label {
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* მობილური მოწყობილობებისთვის */
+@media (max-width: 768px) {
+    .custom-checkout-container {
+        padding: 10px;
+    }
+    
+    .billing-form,
+    .order-review {
+        width: 100%;
+    }
+}

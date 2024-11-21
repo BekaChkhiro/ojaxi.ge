@@ -307,6 +307,21 @@ function custom_override_checkout_fields($fields) {
     $fields['billing']['billing_address_1']['priority'] = 50;
     $fields['billing']['billing_address_1']['required'] = true;
     
+    $fields['billing']['billing_address_1']['placeholder'] = 'შეიყვანეთ მისამართი';
+    $fields['billing']['billing_city']['placeholder'] = 'შეიყვანეთ ქალაქი';
+    
+    $fields['billing']['billing_country'] = array(
+        'type' => 'hidden',
+        'default' => 'GE',
+        'required' => true
+    );
+    
+    $fields['billing']['billing_state'] = array(
+        'type' => 'hidden',
+        'default' => '',
+        'required' => false
+    );
+    
     return $fields;
 }
 
