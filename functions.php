@@ -272,4 +272,40 @@ add_action('wp_enqueue_scripts', function() {
 });
 
 // ჩექაუთი ველების მოდიფიკაცია
+add_filter('woocommerce_checkout_fields', 'custom_override_checkout_fields');
+function custom_override_checkout_fields($fields) {
+    // წავშალოთ არასაჭირო ველები
+    unset($fields['billing']['billing_company']);
+    unset($fields['billing']['billing_country']);
+    unset($fields['billing']['billing_postcode']);
+    unset($fields['billing']['billing_state']);
+    unset($fields['billing']['billing_last_name']);
+    
+    // შევცვალოთ დარჩენილი ველების ლეიბლები და პრიორიტეტები
+    $fields['billing']['billing_first_name']['label'] = 'სახელი და გვარი';
+    $fields['billing']['billing_first_name']['priority'] = 10;
+    
+    $fields['billing']['billing_phone']['label'] = 'ტელეფონი';
+    $fields['billing']['billing_phone']['priority'] = 20;
+    
+    // დავამატოთ ალტერნატიული ტელეფონი
+    $fields['billing']['billing_phone_alt'] = array(
+        'label' => 'ალტერნატიული ტელეფონი',
+        'required' => false,
+        'type' => 'tel',
+        'class' => array('form-row-wide'),
+        'priority' => 25
+    );
+    
+    $fields['billing']['billing_email']['label'] = 'ელ-ფოსტა';
+    $fields['billing']['billing_email']['priority'] = 30;
+    
+    $fields['billing']['billing_city']['label'] = 'ქალაქი';
+    $fields['billing']['billing_city']['priority'] = 40;
+    
+    $fields['billing']['billing_address_1']['label'] = 'მისამართი';
+    $fields['billing']['billing_address_1']['priority'] = 50;
+    
+    return $fields;
+}
 

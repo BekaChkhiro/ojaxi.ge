@@ -9,59 +9,34 @@ get_header(); ?>
     <main id="main" class="site-main">
         <div class="custom-checkout-container">
             <?php
-            // ბილინგის ფორმა
-            ?>
-            <div class="billing-form">
-                <h2>სააანგარიშსწორებო ინფორმაცია</h2>
-                <form id="billing-form" method="post">
-                    <div class="form-row">
-                        <label for="billing_first_name">სახელი და გვარი *</label>
-                        <input type="text" id="billing_first_name" name="billing_first_name" required>
-                    </div>
+            // შევამოწმოთ არის თუ არა კალათა ცარიელი
+            if (WC()->cart->is_empty()) {
+                echo '<p>თქვენი კალათა ცარიელია</p>';
+                echo '<a href="' . get_permalink(wc_get_page_id('shop')) . '">დაბრუნდით მაღაზიაში</a>';
+            } else {
+                // გამოვიტანოთ შეკვეთის ფორმა
+                do_action('woocommerce_before_checkout_form');
+                
+                // დავიწყოთ ჩექაუთის ფორმა
+                $checkout = WC()->checkout();
+                ?>
+                <form name="checkout" method="post" class="checkout woocommerce-checkout" action="<?php echo esc_url(wc_get_checkout_url()); ?>" enctype="multipart/form-data">
                     
-                    <div class="form-row">
-                        <label for="billing_phone">ტელეფონი *</label>
-                        <input type="tel" id="billing_phone" name="billing_phone" required>
+                    <?php if ($checkout->get_checkout_fields()) : ?>
+                        <div class="billing-form">
+                            <h2>სააანგარიშსწორებო ინფორმაცია</h2>
+                            <?php do_action('woocommerce_checkout_billing'); ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="order-review">
+                        <h2>თქვენი შეკვეთა</h2>
+                        <?php do_action('woocommerce_checkout_order_review'); ?>
                     </div>
 
-                    <div class="form-row">
-                        <label for="billing_phone_alt">ალტერნატიული ტელეფონი</label>
-                        <input type="tel" id="billing_phone_alt" name="billing_phone_alt">
-                    </div>
-
-                    <div class="form-row">
-                        <label for="billing_email">ელ-ფოსტა *</label>
-                        <input type="email" id="billing_email" name="billing_email" required>
-                    </div>
-
-                    <div class="form-row">
-                        <label for="billing_city">ქალაქი *</label>
-                        <input type="text" id="billing_city" name="billing_city" required>
-                    </div>
-
-                    <div class="form-row">
-                        <label for="billing_address">მისამართი *</label>
-                        <input type="text" id="billing_address" name="billing_address" required>
-                    </div>
                 </form>
-            </div>
-
-            <?php
-            // გადახდის მეთოდები
-            ?>
-            <div class="payment-methods">
-                <h2>გადახდის მეთოდები</h2>
-                <div class="payment-method">
-                    <input type="radio" id="pay_card" name="payment_method" value="card">
-                    <label for="pay_card">ბარათით გადახდა</label>
-                </div>
-                <div class="payment-method">
-                    <input type="radio" id="pay_transfer" name="payment_method" value="transfer">
-                    <label for="pay_transfer">საბანკო გადარიცხვა</label>
-                </div>
-            </div>
-
-            <button type="submit" class="checkout-submit">შეკვეთის განთავსება</button>
+                <?php do_action('woocommerce_after_checkout_form'); ?>
+            <?php } ?>
         </div>
     </main>
 </div>
