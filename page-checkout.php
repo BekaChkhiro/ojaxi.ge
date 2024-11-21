@@ -7,7 +7,7 @@ get_header(); ?>
 
 <div class="content-area">
     <main id="main" class="site-main">
-        <div class="custom-checkout-container">
+        <div class="custom-checkout-container p-4">
             <?php
             // შევამოწმოთ არის თუ არა კალათა ცარიელი
             if (WC()->cart->is_empty()) {
@@ -24,13 +24,12 @@ get_header(); ?>
                     
                     <?php if ($checkout->get_checkout_fields()) : ?>
                         <div class="billing-form">
-                            <h2>სააანგარიშსწორებო ინფორმაცია</h2>
                             <?php do_action('woocommerce_checkout_billing'); ?>
                         </div>
                     <?php endif; ?>
 
                     <div class="order-review">
-                        <h2>თქვენი შეკვეთა</h2>
+                        <h2 class="mb-4">აირჩიეთ გადახდის მეთოდი</h2>
                         <?php do_action('woocommerce_checkout_order_review'); ?>
                     </div>
 

@@ -289,7 +289,7 @@ function custom_override_checkout_fields($fields) {
     $fields['billing']['billing_phone']['priority'] = 20;
     
     $fields['billing']['billing_phone_alt'] = array(
-        'label' => 'ალტერნატიული ტელეფონი',
+        'label' => 'სხვა საქოტაქტო',
         'required' => false,
         'type' => 'tel',
         'class' => array('form-row-wide'),
@@ -307,8 +307,8 @@ function custom_override_checkout_fields($fields) {
     $fields['billing']['billing_address_1']['priority'] = 50;
     $fields['billing']['billing_address_1']['required'] = true;
     
-    $fields['billing']['billing_address_1']['placeholder'] = 'შეიყვანეთ მისამართი';
-    $fields['billing']['billing_city']['placeholder'] = 'შეიყვანეთ ქალაქი';
+    $fields['billing']['billing_address_1']['placeholder'] = 'შეკვეთა';
+    $fields['billing']['billing_city']['placeholder'] = 'შეკვეთა';
     
     $fields['billing']['billing_country'] = array(
         'type' => 'hidden',
@@ -354,4 +354,9 @@ function custom_checkout_css() {
 }
 
 remove_action('woocommerce_checkout_order_review', 'woocommerce_order_review', 10);
+
+// შევცვალოთ "Place order" ღილაკის ტექსტი
+add_filter('woocommerce_order_button_text', function() {
+    return 'შეკვეთა';
+});
 
