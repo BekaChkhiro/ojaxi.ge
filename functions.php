@@ -385,3 +385,58 @@ add_action('wp_enqueue_scripts', function() {
     ));
 });
 
+// დავამატოთ AJAX handler კალათის გასასუფთავებლად
+add_action('wp_ajax_clear_cart_after_order', 'handle_clear_cart_after_order');
+add_action('wp_ajax_nopriv_clear_cart_after_order', 'handle_clear_cart_after_order');
+
+function handle_clear_cart_after_order() {
+    check_ajax_referer('clear_cart_nonce', 'nonce');
+    
+    if (!isset($_POST['order_id'])) {
+        wp_send_json_error('No order ID provided');
+        return;
+    }
+    
+    $order_id = intval($_POST['order_id']);
+    
+    // შევამოწმოთ შეკვეთის არსებობა
+    $order = wc_get_order($order_id);
+    if (!$order) {
+        wp_send_json_error('Invalid order ID');
+        return;
+    }
+    
+    // გავასუფთაოთ კალათა
+    WC()->cart->empty_cart();
+    
+    // დავამატოთ შეკვეთის სტატუსის განახლება (თუ საჭიროა)
+    $order->update_status('processing');
+    
+    wp_send_json_success(array(
+        'message' => 'Cart cleared successfully',
+        'order_id' => $order_id
+    ));
+}
+
+// დავამატოთ შეკვეთის დასრულების hook
+add_action('woocommerce_checkout_order_processed', 'handle_order_completion', 10, 1);
+
+function handle_order_completion($order_id) {
+    $order = wc_get_order($order_id);
+    if ($order) {
+        // გავასუფთაოთ კალათა
+        WC()->cart->empty_cart();
+        
+        // დავამატოთ ქმედება შეკვეთის დასრულებისას
+        do_action('custom_order_completed', $order_id);
+    }
+}
+
+// დავამატოთ JavaScript-ის ლოკალიზაცია
+add_action('wp_enqueue_scripts', function() {
+    wp_localize_script('react-app', 'wcCheckout', array(
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('clear_cart_nonce')
+    ));
+});
+

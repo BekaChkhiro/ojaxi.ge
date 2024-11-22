@@ -30,8 +30,12 @@ get_header(); ?>
                     </div>
                     <h2 class="text-2xl font-semibold mb-4">მადლობა შეკვეთისთვის!</h2>
                     <p class="text-gray-600 mb-8">თქვენი შეკვეთა წარმატებით გაფორმდა</p>
-            
                 </div>
+                <script>
+                    setTimeout(function() {
+                        window.top.location.href = '<?php echo home_url(); ?>';
+                    }, 5000);
+                </script>
                 <?php
                 return;
             }
@@ -61,10 +65,29 @@ get_header(); ?>
                     });
 
                     $(document.body).on('order_created', function(event, order_id) {
-                        window.parent.postMessage({ 
-                            orderComplete: true,
-                            orderId: order_id
-                        }, '*');
+                        $.ajax({
+                            url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                            type: 'POST',
+                            data: {
+                                action: 'clear_cart_after_order',
+                                order_id: order_id,
+                                nonce: '<?php echo wp_create_nonce('clear_cart_nonce'); ?>'
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    // შევატყობინოთ React აპლიკაციას
+                                    window.parent.postMessage({ 
+                                        orderComplete: true,
+                                        orderId: order_id
+                                    }, '*');
+                                    
+                                    // დავარეფრეშოთ გვერდი მცირე დაყოვნების შემდეგ
+                                    setTimeout(function() {
+                                        window.location.reload();
+                                    }, 500);
+                                }
+                            }
+                        });
                     });
                 });
                 </script>
