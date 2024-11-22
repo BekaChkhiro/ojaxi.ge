@@ -30,12 +30,7 @@ get_header(); ?>
                     </div>
                     <h2 class="text-2xl font-semibold mb-4">მადლობა შეკვეთისთვის!</h2>
                     <p class="text-gray-600 mb-8">თქვენი შეკვეთა წარმატებით გაფორმდა</p>
-                    <a
-                        href="<?php echo home_url(); ?>"
-                        class="bg-[#1a691a] text-white px-6 py-3 rounded-lg hover:bg-[#0f3a0d] transition-colors duration-200"
-                    >
-                        მაღაზიაში დაბრუნება
-                    </a>
+            
                 </div>
                 <?php
                 return;
