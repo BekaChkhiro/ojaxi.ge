@@ -362,3 +362,26 @@ add_filter('woocommerce_order_button_text', function() {
 
 add_filter('woocommerce_billing_fields_title', '__return_empty_string');
 
+// დავამატოთ AJAX ქმედება შეკვეთის დასრულებისთვის
+add_action('wp_ajax_wc_order_completed', 'handle_order_completed');
+add_action('wp_ajax_nopriv_wc_order_completed', 'handle_order_completed');
+
+function handle_order_completed() {
+    if (isset($_POST['order_id'])) {
+        $order_id = intval($_POST['order_id']);
+        WC()->cart->empty_cart();
+        wp_send_json_success([
+            'success' => true
+        ]);
+    }
+    wp_send_json_error();
+}
+
+// დავამატოთ JavaScript-ის ლოკალიზაცია
+add_action('wp_enqueue_scripts', function() {
+    wp_localize_script('react-app', 'wcCheckout', array(
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('wc_order_completed')
+    ));
+});
+
