@@ -34,7 +34,7 @@ get_header(); ?>
                 <script>
                     setTimeout(function() {
                         window.top.location.href = '<?php echo home_url(); ?>';
-                    }, 5000);
+                    }, 3000);
                 </script>
                 <?php
                 return;
