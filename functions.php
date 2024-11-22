@@ -360,3 +360,5 @@ add_filter('woocommerce_order_button_text', function() {
     return 'შეკვეთა';
 });
 
+add_filter('woocommerce_billing_fields_title', '__return_empty_string');
+
