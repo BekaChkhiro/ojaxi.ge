@@ -432,7 +432,7 @@ function handle_order_completion($order_id) {
     }
 }
 
-// დავამატოთ JavaScript-ი ლოკაიზაცია
+// დავამატო��� JavaScript-ი ლოკაიზაცია
 add_action('wp_enqueue_scripts', function() {
     wp_localize_script('react-app', 'wcCheckout', array(
         'ajaxUrl' => admin_url('admin-ajax.php'),
@@ -795,4 +795,67 @@ add_action('wp_head', function() {
         <?php
     }
 }, 1);
+
+// დავამატოთ გადახდის ლინკების დამუშავება
+add_action('wp_footer', function() {
+    if (is_checkout()) {
+        ?>
+        <script>
+        jQuery(document).ready(function($) {
+            // მობაილზე გადახდის ლინკების დამუშავება
+            if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                $(document).on('click', 'a[href*="pay.fondy.eu"]', function(e) {
+                    e.preventDefault();
+                    var paymentUrl = $(this).attr('href');
+                    window.open(paymentUrl, '_blank', 'width=500,height=600');
+                    return false;
+                });
+
+                // Fondy-ს ღილაკების დამუშავება
+                $(document).on('click', '.button-pay-wallet-inner_btn_uc8mB', function(e) {
+                    var $button = $(this);
+                    var paymentUrl = $button.find('iframe').attr('src');
+                    if (paymentUrl && paymentUrl.includes('pay.fondy.eu')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(paymentUrl, '_blank', 'width=500,height=600');
+                        return false;
+                    }
+                });
+            }
+        });
+        </script>
+        <?php
+    }
+}, 999);
+
+// დავამატოთ სტილები მობაილისთვის
+add_action('wp_head', function() {
+    if (is_checkout()) {
+        ?>
+        <style>
+        @media (max-width: 768px) {
+            /* გადახდის ღილაკების სტილები */
+            .payment_method_fondy .payment_box {
+                position: relative !important;
+            }
+            
+            /* Fondy-ს ღილაკების კონტეინერი */
+            .button-pay-wallet-inner_btn_uc8mB {
+                position: relative !important;
+                z-index: 100 !important;
+                cursor: pointer !important;
+            }
+
+            /* დავმალოთ iframe-ის კონტენტი მობაილზე */
+            .button-pay-wallet-inner_iframe_lQcdp {
+                opacity: 0 !important;
+                position: absolute !important;
+                pointer-events: none !important;
+            }
+        }
+        </style>
+        <?php
+    }
+}, 999);
 
