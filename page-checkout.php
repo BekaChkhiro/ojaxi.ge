@@ -89,6 +89,28 @@ get_header(); ?>
                             }
                         });
                     });
+
+                    // ყველა ღილაკისთვის დავამატოთ click ივენთის დამუშავება
+                    $(document).on('click touchstart', 'button, input[type="submit"], .button-pay-wallet-inner_btn_uc8mB', function(e) {
+                        // თუ მობაილზეა
+                        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                            // დავაყოვნოთ ქლიქის ივენთი მცირე დროით
+                            setTimeout(() => {
+                                if ($(this).attr('type') === 'submit' || $(this).hasClass('f-button-pay')) {
+                                    // ფორმის submit-ის შემთხვევაში
+                                    const form = $(this).closest('form');
+                                    if (form.length) {
+                                        form.submit();
+                                    }
+                                }
+                            }, 100);
+                        }
+                    });
+
+                    // გავაუქმოთ ღილაკების default disabled სტატუსი მობაილზე
+                    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                        $('button, input[type="submit"]').prop('disabled', false);
+                    }
                 });
                 </script>
                 <?php

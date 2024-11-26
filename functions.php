@@ -432,7 +432,7 @@ function handle_order_completion($order_id) {
     }
 }
 
-// დავამატოთ JavaScript-ის ლოკალიზაცია
+// დავამატოთ JavaScript-ი��� ლოკა��იზაცია
 add_action('wp_enqueue_scripts', function() {
     wp_localize_script('react-app', 'wcCheckout', array(
         'ajaxUrl' => admin_url('admin-ajax.php'),
@@ -507,7 +507,7 @@ add_filter('woocommerce_order_button_html', function($button_html) {
     );
 }, 20, 1);
 
-// დავამატოთ CSS სტილები
+// დავა���ატოთ CSS სტილები
 add_action('wp_head', function() {
     if (is_checkout()) {
         ?>
@@ -539,4 +539,41 @@ add_action('wp_head', function() {
         <?php
     }
 }, 999);
+
+// დავამატოთ მობაილ-სპეციფიური ფიქსები
+add_action('wp_head', function() {
+    if (is_checkout()) {
+        ?>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <script>
+        // ვცადოთ scroll-ის დაფიქსვა
+        document.addEventListener('touchmove', function(e) {
+            if (e.target.closest('.f-card') || e.target.closest('.f-button-pay')) {
+                e.stopPropagation();
+            }
+        }, { passive: false });
+
+        // დავაფიქსიროთ iOS-ზე ღილაკების პრობლემები
+        document.addEventListener('DOMContentLoaded', function() {
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                document.querySelectorAll('button, input[type="submit"]')
+                    .forEach(button => {
+                        button.addEventListener('touchend', function(e) {
+                            e.preventDefault();
+                            this.click();
+                        });
+                    });
+            }
+        });
+        </script>
+        <?php
+    }
+}, 5);
+
+// დავამატოთ CORS headers გადახდის სისტემისთვის
+add_action('init', function() {
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+    header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
+});
 
