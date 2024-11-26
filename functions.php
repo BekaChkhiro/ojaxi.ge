@@ -432,7 +432,7 @@ function handle_order_completion($order_id) {
     }
 }
 
-// დავამატო��� JavaScript-ი��� ლოკაიზაცია
+// დავამატოთ JavaScript-ი ლოკაიზაცია
 add_action('wp_enqueue_scripts', function() {
     wp_localize_script('react-app', 'wcCheckout', array(
         'ajaxUrl' => admin_url('admin-ajax.php'),
@@ -592,7 +592,7 @@ add_action('wp_head', function() {
                         apiVersion: 2,
                         apiVersionMinor: 0,
                         merchantInfo: {
-                            merchantId: 'YOUR_MERCHANT_ID',
+                            merchantId: '1551317',
                             merchantName: 'Ojaxi.ge'
                         },
                         allowedPaymentMethods: [{
@@ -647,7 +647,7 @@ add_action('wp_footer', function() {
         <script>
         window.googlePayConfig = {
             environment: 'TEST',
-            merchantId: 'YOUR_MERCHANT_ID',
+            merchantId: '1551317',
             merchantName: 'Ojaxi.ge',
             buttonColor: 'black',
             buttonType: 'long'
@@ -689,4 +689,110 @@ add_action('wp_head', function() {
         <?php
     }
 }, 999);
+
+// დავამატოთ საჭირო iframe permissions policy headers
+add_action('send_headers', function() {
+    if (is_checkout()) {
+        header('Permissions-Policy: payment=*');
+        header('Cross-Origin-Embedder-Policy: require-corp');
+        header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
+    }
+});
+
+// შევცვალოთ Google Pay-ს კონფიგურაცია
+add_action('wp_footer', function() {
+    if (is_checkout()) {
+        ?>
+        <script>
+        // Google Pay-ს ინიციალიზაცია
+        let googlePayClient;
+
+        function initGooglePay() {
+            if (!window.google || !window.google.payments) {
+                console.error('Google Pay API not loaded');
+                return;
+            }
+
+            googlePayClient = new google.payments.api.PaymentsClient({
+                environment: 'TEST', // TEST ან PRODUCTION
+                paymentDataCallbacks: {
+                    onPaymentAuthorized: onPaymentAuthorized
+                }
+            });
+
+            const button = googlePayClient.createButton({
+                onClick: onGooglePayButtonClicked,
+                allowedPaymentMethods: [{
+                    type: 'CARD',
+                    parameters: {
+                        allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+                        allowedCardNetworks: ['VISA', 'MASTERCARD']
+                    }
+                }]
+            });
+
+            // ჩავანაცვლოთ არსებული ღილაკი
+            const container = document.querySelector('.button-pay-wallet-inner_btn_uc8mB');
+            if (container) {
+                container.innerHTML = '';
+                container.appendChild(button);
+            }
+        }
+
+        async function onGooglePayButtonClicked() {
+            try {
+                const paymentData = await googlePayClient.loadPaymentData({
+                    merchantInfo: {
+                        merchantId: '1551317',
+                        merchantName: 'Ojaxi.ge'
+                    },
+                    transactionInfo: {
+                        totalPriceStatus: 'FINAL',
+                        totalPrice: '<?php echo WC()->cart->total; ?>',
+                        currencyCode: 'GEL'
+                    },
+                    callbackIntents: ['PAYMENT_AUTHORIZATION']
+                });
+                
+                // გადახდის დამუშავება
+                processPayment(paymentData);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function onPaymentAuthorized(paymentData) {
+            return new Promise(function(resolve, reject) {
+                // აქ დაამუშავეთ გადახდის ავტორიზაცია
+                processPayment(paymentData)
+                    .then(() => resolve({transactionState: 'SUCCESS'}))
+                    .catch(() => reject());
+            });
+        }
+
+        async function processPayment(paymentData) {
+            // აქ დაამატეთ გადახდის დამუშავების ლოგიკა
+            console.log('Processing payment:', paymentData);
+        }
+
+        // ვიტვირთავთ Google Pay SDK-ს
+        const script = document.createElement('script');
+        script.src = 'https://pay.google.com/gp/p/js/pay.js';
+        script.onload = initGooglePay;
+        document.body.appendChild(script);
+        </script>
+        <?php
+    }
+}, 99);
+
+// დავამატოთ საჭირო მეტა თეგები
+add_action('wp_head', function() {
+    if (is_checkout()) {
+        ?>
+        <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE">
+        <meta name="google-pay-api-version" content="2">
+        <meta name="google-pay-merchant-id" content="1551317">
+        <?php
+    }
+}, 1);
 
