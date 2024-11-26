@@ -432,7 +432,7 @@ function handle_order_completion($order_id) {
     }
 }
 
-// დავამატოთ JavaScript-ი��� ლოკა��იზაცია
+// დავამატო��� JavaScript-ი��� ლოკაიზაცია
 add_action('wp_enqueue_scripts', function() {
     wp_localize_script('react-app', 'wcCheckout', array(
         'ajaxUrl' => admin_url('admin-ajax.php'),
@@ -507,7 +507,7 @@ add_filter('woocommerce_order_button_html', function($button_html) {
     );
 }, 20, 1);
 
-// დავა���ატოთ CSS სტილები
+// დავამატოთ CSS სტილები
 add_action('wp_head', function() {
     if (is_checkout()) {
         ?>
@@ -576,4 +576,117 @@ add_action('init', function() {
     header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
     header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
 });
+
+// დავამატოთ Google Pay-ს მხარდაჭერა მობაილისთვის
+add_action('wp_head', function() {
+    if (is_checkout()) {
+        ?>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // შევამოწმოთ არის თუ არა Google Pay ხელმისაწვდომი
+            if (window.PaymentRequest) {
+                const supportedInstruments = [{
+                    supportedMethods: 'https://google.com/pay',
+                    data: {
+                        environment: 'TEST',
+                        apiVersion: 2,
+                        apiVersionMinor: 0,
+                        merchantInfo: {
+                            merchantId: 'YOUR_MERCHANT_ID',
+                            merchantName: 'Ojaxi.ge'
+                        },
+                        allowedPaymentMethods: [{
+                            type: 'CARD',
+                            parameters: {
+                                allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+                                allowedCardNetworks: ['VISA', 'MASTERCARD']
+                            }
+                        }]
+                    }
+                }];
+
+                // მობაილზე Google Pay-ს ღილაკის დამუშავება
+                document.querySelector('.button-pay-wallet-inner_btn_uc8mB').addEventListener('click', function(e) {
+                    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                        e.preventDefault();
+                        
+                        const paymentRequest = new PaymentRequest(
+                            supportedInstruments,
+                            {
+                                total: {
+                                    label: 'Total',
+                                    amount: {
+                                        currency: 'GEL',
+                                        value: '<?php echo WC()->cart->total; ?>'
+                                    }
+                                }
+                            }
+                        );
+
+                        paymentRequest.show()
+                            .then(function(paymentResponse) {
+                                // გადახდის დამუშავება
+                                return paymentResponse.complete('success');
+                            })
+                            .catch(function(err) {
+                                console.error('Payment failed:', err);
+                            });
+                    }
+                });
+            }
+        });
+        </script>
+        <?php
+    }
+}, 999);
+
+// დავამატოთ Google Pay-ს კონფიგურაცია
+add_action('wp_footer', function() {
+    if (is_checkout()) {
+        ?>
+        <script>
+        window.googlePayConfig = {
+            environment: 'TEST',
+            merchantId: 'YOUR_MERCHANT_ID',
+            merchantName: 'Ojaxi.ge',
+            buttonColor: 'black',
+            buttonType: 'long'
+        };
+        </script>
+        <?php
+    }
+}, 10);
+
+add_action('wp_head', function() {
+    if (is_checkout()) {
+        ?>
+        <style>
+            @media (max-width: 768px) {
+                .button-pay-wallet-inner_btn_uc8mB {
+                    width: 100% !important;
+                    height: 48px !important;
+                    margin-bottom: 15px !important;
+                    border-radius: 4px !important;
+                    overflow: hidden !important;
+                }
+
+                .button-pay-wallet-inner_iframe_lQcdp {
+                    width: 100% !important;
+                    height: 100% !important;
+                    pointer-events: none !important;
+                }
+
+                .button-pay-wallet-inner_click_QLqcd {
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    cursor: pointer !important;
+                }
+            }
+        </style>
+        <?php
+    }
+}, 999);
 
