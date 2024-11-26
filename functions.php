@@ -440,3 +440,103 @@ add_action('wp_enqueue_scripts', function() {
     ));
 });
 
+// დავამატოთ მობაილ ვერსიისთვის საჭირო JavaScript
+add_action('wp_footer', function() {
+    if (is_checkout()) {
+        ?>
+        <script>
+        jQuery(document).ready(function($) {
+            // მობაილ ვერსიაში ღილაკებზე დაჭერის ჰენდლერი
+            function handleMobileButtons() {
+                $(document).on('click touchstart', 'button[type="submit"], input[type="submit"]', function(e) {
+                    // თუ ღილაკი disabled არის, გავაუქმოთ ქმედება
+                    if ($(this).prop('disabled')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    // დავამატოთ active კლასი
+                    $(this).addClass('button-active');
+                });
+
+                // თითის აღების შემთხვევაში მოვაშოროთ active კლასი
+                $(document).on('touchend', 'button[type="submit"], input[type="submit"]', function() {
+                    $(this).removeClass('button-active');
+                });
+            }
+
+            handleMobileButtons();
+
+            // დავამატოთ სტილები მობაილ ვერსიისთვის
+            $('<style>')
+                .prop('type', 'text/css')
+                .html(`
+                    @media (max-width: 768px) {
+                        button[type="submit"],
+                        input[type="submit"] {
+                            -webkit-appearance: none;
+                            -webkit-tap-highlight-color: transparent;
+                            cursor: pointer;
+                            touch-action: manipulation;
+                        }
+                        
+                        .button-active {
+                            opacity: 0.8;
+                            transform: scale(0.98);
+                        }
+                    }
+                `)
+                .appendTo('head');
+        });
+        </script>
+        <?php
+    }
+}, 99);
+
+// დავამატოთ ფილტრი რომ გავაუქმოთ ავტომატური disabled ატრიბუტი
+add_filter('woocommerce_order_button_html', function($button_html) {
+    return str_replace('disabled', '', $button_html);
+}, 10, 1);
+
+// შევცვალოთ ღილაკის HTML სტრუქტურა მობაილისთვის
+add_filter('woocommerce_order_button_html', function($button_html) {
+    return str_replace(
+        'class="button alt"',
+        'class="button alt mobile-friendly-button"',
+        $button_html
+    );
+}, 20, 1);
+
+// დავამატოთ CSS სტილები
+add_action('wp_head', function() {
+    if (is_checkout()) {
+        ?>
+        <style>
+            @media (max-width: 768px) {
+                .mobile-friendly-button {
+                    width: 100%;
+                    padding: 15px !important;
+                    font-size: 16px !important;
+                    -webkit-appearance: none !important;
+                    border-radius: 4px !important;
+                    margin-top: 10px !important;
+                }
+
+                /* გავაუმჯობესოთ ღილაკზე დაჭერის ვიზუალი */
+                .mobile-friendly-button:active {
+                    transform: scale(0.98);
+                    transition: transform 0.1s ease;
+                }
+
+                /* Safari-სთვის სპეციფიური ფიქსები */
+                input[type="submit"],
+                button[type="submit"] {
+                    -webkit-appearance: none;
+                    -webkit-border-radius: 4px;
+                }
+            }
+        </style>
+        <?php
+    }
+}, 999);
+
