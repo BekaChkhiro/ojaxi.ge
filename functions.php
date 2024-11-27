@@ -432,11 +432,20 @@ function handle_order_completion($order_id) {
     }
 }
 
-// დავამატოთ JavaScript-ის ლოკალიზაცია
+// დავამატო��� JavaScript-ი��� ლოკალიზაცია
 add_action('wp_enqueue_scripts', function() {
     wp_localize_script('react-app', 'wcCheckout', array(
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('clear_cart_nonce')
     ));
 });
+
+function enqueue_wp_api_settings() {
+    wp_enqueue_script( 'wp-api' );
+    wp_localize_script( 'wp-api', 'wpApiSettings', array(
+        'root' => esc_url_raw( rest_url() ),
+        'nonce' => wp_create_nonce( 'wp_rest' )
+    ));
+}
+add_action( 'wp_enqueue_scripts', 'enqueue_wp_api_settings' );
 
