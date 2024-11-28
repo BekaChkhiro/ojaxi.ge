@@ -347,19 +347,33 @@ function custom_checkout_css() {
     if (is_checkout()) {
         ?>
         <style>
-            .woocommerce-checkout-review-order-table thead,
-            .woocommerce-checkout-review-order-table tbody {
-                display: none !important;
+            /* დავტოვოთ ცხრილი ხილული */
+            .woocommerce-checkout-review-order-table {
+                width: 100%;
+                margin-bottom: 20px;
             }
-            .woocommerce-checkout-review-order-table tfoot tr:not(:last-child) {
-                display: none !important;
+            
+            /* გავაფორმოთ ცხრილის სათაური */
+            .woocommerce-checkout-review-order-table thead th {
+                background: #f8f8f8;
+                padding: 10px;
+                text-align: left;
+            }
+            
+            /* გავაფორმოთ პროდუქტების სტრიქონები */
+            .woocommerce-checkout-review-order-table tbody td {
+                padding: 10px;
+                border-bottom: 1px solid #eee;
+            }
+            
+            /* გავაფორმოთ ჯამური თანხის სექცია */
+            .woocommerce-checkout-review-order-table tfoot tr:last-child {
+                font-weight: bold;
             }
         </style>
         <?php
     }
 }
-
-remove_action('woocommerce_checkout_order_review', 'woocommerce_order_review', 10);
 
 // შევცვალოთ "Place order" ღილაკის ტექსტი
 add_filter('woocommerce_order_button_text', function() {
@@ -675,4 +689,24 @@ add_action('rest_api_init', function() {
         }
         return $served;
     }, 10, 3);
+});
+
+// დავამატოთ order review-ს კასტომიზაცია
+add_filter('woocommerce_cart_item_name', function($name, $cart_item, $cart_item_key) {
+    $product = $cart_item['data'];
+    $quantity = $cart_item['quantity'];
+    
+    return sprintf(
+        '%s <strong>x %s</strong>',
+        $product->get_name(),
+        $quantity
+    );
+}, 10, 3);
+
+// დავამატოთ ჯამური თანხის ფორმატირება
+add_filter('woocommerce_cart_totals_order_total_html', function($value) {
+    return sprintf(
+        '<span class="amount">%s ₾</span>',
+        number_format(WC()->cart->get_total('edit'), 2)
+    );
 });

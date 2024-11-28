@@ -12,7 +12,7 @@ get_header(); ?>
                 <img 
                     src="<?php echo get_theme_file_uri('/build/images/ojaxi_logo.33140913.webp'); ?>" 
                     alt="Ojaxi Logo"
-                    class="h-8 w-auto"
+                    style="width: 100px;"
                 />
             </div>
             
@@ -96,18 +96,23 @@ get_header(); ?>
                 ?>
                 <form name="checkout" method="post" class="checkout woocommerce-checkout" action="<?php echo esc_url(wc_get_checkout_url()); ?>" enctype="multipart/form-data">
                     <?php if ($checkout->get_checkout_fields()) : ?>
-                        <div class="billing-form">
+                        <div class="billing-form mb-8">
                             <?php do_action('woocommerce_checkout_billing'); ?>
                         </div>
                     <?php endif; ?>
 
                     <div class="order-review">
-                        <h2 class="mb-4">აირჩიეთ გადახდის მეთოდი</h2>
+                        <h2 class="mb-4">შეკვეთის დეტალები</h2>
                         <?php 
-                        // ძალით გამოვიტანოთ კალათის მონაცემები
+                        // დავაბრუნოთ შეკვეთის მიმოხილვა
                         do_action('woocommerce_checkout_before_order_review');
                         do_action('woocommerce_checkout_order_review');
                         ?>
+                    </div>
+
+                    <div class="payment-section mt-8">
+                        <h2 class="mb-4">აირჩიეთ გადახდის მეთოდი</h2>
+                        <?php do_action('woocommerce_checkout_payment'); ?>
                     </div>
                 </form>
                 <?php
