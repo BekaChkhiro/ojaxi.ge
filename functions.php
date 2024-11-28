@@ -479,9 +479,10 @@ add_action('rest_api_init', function() {
     }, 10, 3);
 });
 
-// დავამატოთ WooCommerce Store API Settings
+// დევცვალოთ არსებული add_wc_store_api_nonce ფუნქცია
 function add_wc_store_api_nonce() {
-    wp_enqueue_script('wc-store-api-settings', null, array(), null, true);
+    // დავამატოთ სკრიპტი react-app-ის დამოკიდებულებად
+    wp_enqueue_script('wc-store-api-settings', '', array('react-app'), null, true);
     wp_add_inline_script('wc-store-api-settings', sprintf(
         'window.wcStoreApiSettings = %s;',
         wp_json_encode(array(
@@ -489,6 +490,7 @@ function add_wc_store_api_nonce() {
             'root' => esc_url_raw(rest_url()),
             'storeApiRoot' => esc_url_raw(rest_url('wc/store/v1')),
         ))
-    ));
+    ), 'before');
 }
-add_action('wp_enqueue_scripts', 'add_wc_store_api_nonce', 10);
+// შევცვალოთ პრიორიტეტი უფრო დაბალზე, რომ react-app-ის შემდეგ ჩაიტვირთოს
+add_action('wp_enqueue_scripts', 'add_wc_store_api_nonce', 99);
