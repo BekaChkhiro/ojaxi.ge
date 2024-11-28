@@ -53,22 +53,62 @@ get_header(); ?>
                 return;
             }
             
-            do_action('woocommerce_before_checkout_form');
-            $checkout = WC()->checkout();
-            ?>
-            <form name="checkout" method="post" class="checkout woocommerce-checkout" action="<?php echo esc_url(wc_get_checkout_url()); ?>" enctype="multipart/form-data">
-                <?php if ($checkout->get_checkout_fields()) : ?>
-                    <div class="billing-form">
-                        <?php do_action('woocommerce_checkout_billing'); ?>
-                    </div>
-                <?php endif; ?>
+            // დავამატოთ კალათის განახლების ლოგიკა
+            add_action('wp_head', function() {
+                if (is_checkout()) {
+                    WC()->cart->calculate_totals();
+                    ?>
+                    <script>
+                        // კალათის განახლება გვერდის ჩატვირთვისას
+                        document.addEventListener('DOMContentLoaded', function() {
+                            if (typeof wc_checkout_params !== 'undefined') {
+                                jQuery(function($) {
+                                    // ძალით განვაახლოთ კალათის მონაცემები
+                                    $('body').trigger('update_checkout');
+                                    
+                                    // დავაფიქსიროთ კალათის განახლება
+                                    $(document.body).on('updated_checkout', function() {
+                                        // გადავამოწმოთ თანხა განახლების შემდეგ
+                                        if ($('.order-total .amount').length === 0) {
+                                            location.reload();
+                                        }
+                                    });
+                                });
+                            }
+                        });
+                    </script>
+                    <?php
+                }
+            }, 5);
+            
+            // შევცვალოთ ჩექაუთის ფორმის გამოტანის ლოგიკა
+            if (!WC()->cart->is_empty()) {
+                do_action('woocommerce_before_checkout_form');
+                $checkout = WC()->checkout();
+                ?>
+                <form name="checkout" method="post" class="checkout woocommerce-checkout" action="<?php echo esc_url(wc_get_checkout_url()); ?>" enctype="multipart/form-data">
+                    <?php if ($checkout->get_checkout_fields()) : ?>
+                        <div class="billing-form">
+                            <?php do_action('woocommerce_checkout_billing'); ?>
+                        </div>
+                    <?php endif; ?>
 
-                <div class="order-review">
-                    <h2 class="mb-4">აირჩიეთ გადახდის მეთოდი</h2>
-                    <?php do_action('woocommerce_checkout_order_review'); ?>
-                </div>
-            </form>
-            <?php 
+                    <div class="order-review">
+                        <h2 class="mb-4">აირჩიეთ გადახდის მეთოდი</h2>
+                        <?php 
+                        // ძალით გამოვიტანოთ კალათის მონაცემები
+                        do_action('woocommerce_checkout_before_order_review');
+                        do_action('woocommerce_checkout_order_review');
+                        ?>
+                    </div>
+                </form>
+                <?php
+            } else {
+                // თუ კალათა ცარიელია, დავაბრუნოთ მთავარ გვერდზე
+                wp_redirect(home_url());
+                exit;
+            }
+            
             add_action('wp_footer', function() {
                 ?>
                 <script>
