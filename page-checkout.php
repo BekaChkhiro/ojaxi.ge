@@ -9,8 +9,11 @@ get_header(); ?>
     <main id="main" class="site-main">
         <div class="custom-checkout-container p-4">
             <?php
-            if (WC()->cart->is_empty()) {
-                // მადლობის გვერდის HTML
+            // დავამატოთ მობილური დეტექციის ლოგიკა
+            $is_mobile = wp_is_mobile();
+            
+            if (WC()->cart->is_empty() && !$is_mobile) {
+                // მადლობის გვერდის HTML მხოლოდ დესკტოპზე
                 ?>
                 <div class="flex flex-col items-center justify-center p-8 text-center">
                     <div class="w-16 h-16 bg-[#1a691a] rounded-full flex items-center justify-center mb-6">
@@ -35,6 +38,16 @@ get_header(); ?>
                     setTimeout(function() {
                         window.top.location.href = '<?php echo home_url(); ?>';
                     }, 3000);
+                </script>
+                <?php
+                return;
+            }
+            
+            // მობილურზე გადამისამართება მთავარ გვერდზე
+            if (WC()->cart->is_empty() && $is_mobile) {
+                ?>
+                <script>
+                    window.location.href = '<?php echo home_url(); ?>';
                 </script>
                 <?php
                 return;
