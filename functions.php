@@ -2,13 +2,18 @@
 function load_react_styles_scripts() {
     wp_enqueue_style('tailwind-styles', get_theme_file_uri('/build/index.css'));
     
-    wp_enqueue_script('react', 'https://unpkg.com/react@18/umd/react.development.js', array(), '18', true);
-    wp_enqueue_script('react-dom', 'https://unpkg.com/react-dom@18/umd/react-dom.development.js', array('react'), '18', true);
+    wp_enqueue_script('react', 'https://unpkg.com/react@18/umd/react.production.min.js', array(), '18', true);
+    wp_enqueue_script('react-dom', 'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js', array('react'), '18', true);
     wp_enqueue_script('react-app', get_theme_file_uri('/build/index.js'), array('react', 'react-dom'), '1.0', true);
     
     wp_localize_script('react-app', 'wpApiSettings', array(
         'root' => esc_url_raw(rest_url()),
         'nonce' => wp_create_nonce('wp_rest')
+    ));
+    
+    wp_localize_script('react-app', 'wcCheckout', array(
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('clear_cart_nonce')
     ));
 }
 add_action('wp_enqueue_scripts', 'load_react_styles_scripts');
@@ -85,7 +90,7 @@ add_action('rest_api_init', function() {
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
         header('Access-Control-Allow-Credentials: true');
         header('Access-Control-Expose-Headers: Link');
-        header('Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization');
+        header('Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization, X-WC-Store-API-Nonce, X-WP-Nonce');
         
         return $value;
     });
@@ -249,28 +254,6 @@ add_action('rest_api_init', function() {
 // Disable nonce verification for Store API
 add_filter('woocommerce_store_api_disable_nonce_check', '__return_true');
 
-// Add Store API nonce to React app
-function add_wc_store_api_nonce() {
-    wp_localize_script('react-app', 'wcStoreApiSettings', array(
-        'nonce' => wp_create_nonce('wc_store_api')
-    ));
-}
-add_action('wp_enqueue_scripts', 'add_wc_store_api_nonce');
-
-// Allow Store API access
-add_filter('woocommerce_rest_check_permissions', function($permission, $context, $object_id, $post_type){
-    if (strpos($_SERVER['REQUEST_URI'], '/wc/store/') !== false) {
-        return true;
-    }
-    return $permission;
-}, 10, 4);
-
-add_action('wp_enqueue_scripts', function() {
-    wp_localize_script('react-app', 'wcStoreApiSettings', array(
-        'nonce' => wp_create_nonce('wc_store_api')
-    ));
-});
-
 // ჩექაუთი ველების მოდიფიკაცია
 add_filter('woocommerce_checkout_fields', 'custom_override_checkout_fields');
 function custom_override_checkout_fields($fields) {
@@ -432,19 +415,10 @@ function handle_order_completion($order_id) {
     }
 }
 
-// დავამატო��� JavaScript-ი��� ლოკალიზაცია
+// დავამატოთ JavaScript-ი ლოკალიზაცია
 add_action('wp_enqueue_scripts', function() {
     wp_localize_script('react-app', 'wcCheckout', array(
         'ajaxUrl' => admin_url('admin-ajax.php'),
-        'nonce' => wp_create_nonce('clear_cart_nonce')
+        'nonce' => wp_create_nonce('clear_cart_nonce') 
     ));
 });
-
-function enqueue_wp_api_settings() {
-    wp_enqueue_script( 'wp-api' );
-    wp_localize_script( 'wp-api', 'wpApiSettings', array(
-        'root' => esc_url_raw( rest_url() ),
-        'nonce' => wp_create_nonce( 'wp_rest' )
-    ));
-}
-add_action( 'wp_enqueue_scripts', 'enqueue_wp_api_settings' );
