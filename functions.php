@@ -15,6 +15,12 @@ function load_react_styles_scripts() {
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('clear_cart_nonce')
     ));
+    
+    // დავამატოთ WooCommerce Store API nonce
+    wp_localize_script('react-app', 'wcStoreApiSettings', array(
+        'nonce' => wp_create_nonce('wc_store_api'),
+        'storeApiRoot' => rest_url('wc/store/v1')
+    ));
 }
 add_action('wp_enqueue_scripts', 'load_react_styles_scripts');
 
