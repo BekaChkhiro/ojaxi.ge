@@ -327,7 +327,7 @@ add_filter('woocommerce_checkout_fields', function($fields) {
         'required' => false
     );
     
-    // დავმალოთ order review-ს ცხრილის ე���ემენტები
+    // დავმალოთ order review-ს ცხრილის ემენტები
     add_filter('woocommerce_order_review_order_table_args', function($args) {
         $args['show_cart_contents'] = false;
         return $args;
@@ -410,7 +410,7 @@ add_action('wp_enqueue_scripts', function() {
     ));
 });
 
-// დავამატოთ AJAX handler კალათი�� გასასუფთავებლად
+// დავამატოთ AJAX handler კალათი გასასუფთავებლად
 add_action('wp_ajax_clear_cart_after_order', 'handle_clear_cart_after_order');
 add_action('wp_ajax_nopriv_clear_cart_after_order', 'handle_clear_cart_after_order');
 
@@ -611,7 +611,7 @@ add_action('rest_api_init', function() {
     }, 10, 3);
 });
 
-// დავამ��ტოთ ახალი endpoint კალათიდან პროდუქტის წასაშლელად
+// დავამტოთ ახალი endpoint კალათიდან პროდუქტის წასაშლელად
 add_action('rest_api_init', function() {
     register_rest_route('wc/store/v1', '/cart/remove-item', array(
         'methods' => 'POST',
@@ -800,6 +800,12 @@ add_action('wp_head', function() {
 
             #payment {
                 display: block !important;
+            }
+
+            /* შეკვეთის ღილაკის სტილი */
+            #place_order {
+                width: 100% !important;
+                margin-top: 1rem !important;
             }
         </style>
         <?php
