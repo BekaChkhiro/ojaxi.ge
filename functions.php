@@ -816,3 +816,60 @@ add_action('wp_head', function() {
 add_action('init', function() {
     remove_action('woocommerce_checkout_order_review', 'woocommerce_order_review', 10);
 });
+
+// დავამატოთ endpoint-ები კალათის მენეჯმენტისთვის
+add_action('rest_api_init', function() {
+    // წაშლის endpoint
+    register_rest_route('wc/store/v1', '/cart/items/(?P<key>[a-zA-Z0-9_-]+)', array(
+        'methods' => 'DELETE',
+        'callback' => function($request) {
+            $key = $request['key'];
+            
+            if (empty($key)) {
+                return new WP_Error('missing_key', 'Cart item key is required', array('status' => 400));
+            }
+            
+            $cart = WC()->cart;
+            $removed = $cart->remove_cart_item($key);
+            
+            if ($removed) {
+                $cart->calculate_totals();
+                return new WP_REST_Response(array(
+                    'success' => true,
+                    'cart' => WC()->cart->get_cart()
+                ), 200);
+            }
+            
+            return new WP_Error('remove_failed', 'Failed to remove item from cart', array('status' => 500));
+        },
+        'permission_callback' => '__return_true'
+    ));
+
+    // რაოდენობის განახლების endpoint
+    register_rest_route('wc/store/v1', '/cart/items/(?P<key>[a-zA-Z0-9_-]+)', array(
+        'methods' => 'POST',
+        'callback' => function($request) {
+            $key = $request['key'];
+            $params = $request->get_params();
+            $quantity = isset($params['quantity']) ? intval($params['quantity']) : 1;
+            
+            if (empty($key)) {
+                return new WP_Error('missing_key', 'Cart item key is required', array('status' => 400));
+            }
+            
+            $cart = WC()->cart;
+            $updated = $cart->set_quantity($key, $quantity);
+            
+            if ($updated) {
+                $cart->calculate_totals();
+                return new WP_REST_Response(array(
+                    'success' => true,
+                    'cart' => WC()->cart->get_cart()
+                ), 200);
+            }
+            
+            return new WP_Error('update_failed', 'Failed to update cart item', array('status' => 500));
+        },
+        'permission_callback' => '__return_true'
+    ));
+});
