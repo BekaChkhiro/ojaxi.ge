@@ -286,7 +286,7 @@ function custom_override_checkout_fields($fields) {
     $fields['billing']['billing_city']['priority'] = 40;
     $fields['billing']['billing_city']['required'] = true;
     
-    $fields['billing']['billing_address_1']['label'] = 'მისამართი';
+    $fields['billing']['billing_address_1']['label'] = 'მისამარ���ი';
     $fields['billing']['billing_address_1']['priority'] = 50;
     $fields['billing']['billing_address_1']['required'] = true;
     
@@ -558,4 +558,33 @@ add_action('rest_api_init', function() {
         
         return $served;
     }, 10, 3);
+});
+
+// დავამატოთ ახალი endpoint კალათიდან პროდუქტის წასაშლელად
+add_action('rest_api_init', function() {
+    register_rest_route('wc/store/v1', '/cart/remove-item', array(
+        'methods' => 'POST',
+        'callback' => function($request) {
+            $params = $request->get_params();
+            $key = isset($params['key']) ? sanitize_text_field($params['key']) : '';
+            
+            if (empty($key)) {
+                return new WP_Error('missing_key', 'Cart item key is required', array('status' => 400));
+            }
+            
+            $cart = WC()->cart;
+            $removed = $cart->remove_cart_item($key);
+            
+            if ($removed) {
+                $cart->calculate_totals();
+                return new WP_REST_Response(array(
+                    'success' => true,
+                    'cart' => WC()->cart->get_cart()
+                ), 200);
+            }
+            
+            return new WP_Error('remove_failed', 'Failed to remove item from cart', array('status' => 500));
+        },
+        'permission_callback' => '__return_true'
+    ));
 });
