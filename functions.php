@@ -492,3 +492,33 @@ function add_wc_store_api_nonce() {
     ));
 }
 add_action('wp_enqueue_scripts', 'add_wc_store_api_nonce', 1);
+
+// დავამატოთ CORS headers Safari-სთვის
+add_action('init', function() {
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+    header("Access-Control-Allow-Headers: Authorization, X-WP-Nonce, Content-Type, Accept");
+    header("Access-Control-Allow-Credentials: true");
+    
+    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+        status_header(200);
+        exit();
+    }
+});
+
+// მოვახდინოთ WP REST API-ს მოდიფიკაცია Safari-სთვის
+add_filter('rest_authentication_errors', function($result) {
+    if (!empty($_SERVER['HTTP_ORIGIN'])) {
+        header("Access-Control-Allow-Origin: " . $_SERVER['HTTP_ORIGIN']);
+    }
+    
+    if ('OPTIONS' === $_SERVER['REQUEST_METHOD']) {
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+        header("Access-Control-Allow-Headers: Authorization, X-WP-Nonce, Content-Type, Accept");
+        header("Access-Control-Allow-Credentials: true");
+        header("Access-Control-Max-Age: 3600");
+        exit();
+    }
+    
+    return $result;
+});
