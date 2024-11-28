@@ -422,3 +422,46 @@ add_action('wp_enqueue_scripts', function() {
         'nonce' => wp_create_nonce('clear_cart_nonce') 
     ));
 });
+
+// დავამატოთ WooCommerce Store API-ს endpoint-ები
+add_action('rest_api_init', function() {
+    register_rest_route('wc/store/v1', '/cart/remove-item', array(
+        'methods' => 'POST',
+        'callback' => 'handle_remove_cart_item',
+        'permission_callback' => '__return_true'
+    ));
+});
+
+function handle_remove_cart_item($request) {
+    $params = $request->get_params();
+    
+    if (!isset($params['key'])) {
+        return new WP_Error('missing_key', 'Cart item key is required', array('status' => 400));
+    }
+    
+    $cart = WC()->cart;
+    $removed = $cart->remove_cart_item($params['key']);
+    
+    if ($removed) {
+        $cart->calculate_totals();
+        return new WP_REST_Response(array(
+            'success' => true,
+            'cart' => WC()->cart->get_cart()
+        ), 200);
+    }
+    
+    return new WP_Error('remove_failed', 'Failed to remove item from cart', array('status' => 500));
+}
+
+// დავამატოთ CORS headers WooCommerce Store API-სთვის
+add_action('rest_api_init', function() {
+    add_filter('rest_pre_serve_request', function($served, $result, $request) {
+        if (strpos($request->get_route(), '/wc/store/') !== false) {
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WC-Store-API-Nonce');
+        }
+        return $served;
+    }, 10, 3);
+});
