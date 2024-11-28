@@ -535,7 +535,7 @@ add_action('init', function() {
     }
 }, 1);
 
-// განვ��ახლოთ WooCommerce Store API-ს CORS კონფიგურაცია
+// განვაახლოთ WooCommerce Store API-ს CORS კონფიგურაცია
 add_action('rest_api_init', function() {
     remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
     add_filter('rest_pre_serve_request', function($served, $result, $request) {
@@ -759,30 +759,4 @@ add_action('wp_head', function() {
         </style>
         <?php
     }
-});
-
-// დავმალოთ order review სექცია
-add_action('wp_head', function() {
-    if (is_checkout()) {
-        ?>
-        <style>
-            /* დავმალოთ order review სექცია */
-            .woocommerce-checkout-review-order-table,
-            .woocommerce-checkout-review-order-table * {
-                display: none !important;
-            }
-            
-            /* დავმალოთ შეკვეთის დეტალების სათაური */
-            .order-review h2 {
-                display: none !important;
-            }
-        </style>
-        <?php
-    }
-});
-
-// გავთიშოთ order review-ს hooks
-add_action('init', function() {
-    remove_action('woocommerce_checkout_order_review', 'woocommerce_order_review', 10);
-    remove_action('woocommerce_checkout_order_review', 'woocommerce_checkout_payment', 20);
 });
