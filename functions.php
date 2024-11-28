@@ -278,7 +278,7 @@ function custom_override_checkout_fields($fields) {
     $fields['billing']['billing_phone']['priority'] = 20;
     
     $fields['billing']['billing_phone_alt'] = array(
-        'label' => 'სხვა საქოტაქტ��',
+        'label' => 'სხვა საქოტაქტ',
         'required' => false,
         'type' => 'tel',
         'class' => array('form-row-wide'),
@@ -487,60 +487,52 @@ function add_wc_store_api_nonce() {
 }
 add_action('wp_enqueue_scripts', 'add_wc_store_api_nonce', 1);
 
-// დავამატოთ CORS headers Safari-სთვის
+// დევცვალოთ CORS-ის კონფიგურაცია Safari-სთვის
 add_action('init', function() {
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
-    header("Access-Control-Allow-Headers: Authorization, X-WP-Nonce, Content-Type, Accept");
-    header("Access-Control-Allow-Credentials: true");
-    
-    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-        status_header(200);
-        exit();
+    if (!headers_sent()) {
+        header('Access-Control-Allow-Origin: ' . esc_url_raw(home_url()));
+        header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
+        header('Access-Control-Allow-Headers: Authorization, X-WP-Nonce, Content-Type, Accept, X-WC-Store-API-Nonce');
+        header('Access-Control-Allow-Credentials: true');
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            status_header(200);
+            exit();
+        }
     }
-});
+}, 1);
 
-// მოვახდინოთ WP REST API-ს მოდიფიკაცია Safari-სთვის
-add_filter('rest_authentication_errors', function($result) {
-    if (!empty($_SERVER['HTTP_ORIGIN'])) {
-        header("Access-Control-Allow-Origin: " . $_SERVER['HTTP_ORIGIN']);
-    }
-    
-    if ('OPTIONS' === $_SERVER['REQUEST_METHOD']) {
-        header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
-        header("Access-Control-Allow-Headers: Authorization, X-WP-Nonce, Content-Type, Accept");
-        header("Access-Control-Allow-Credentials: true");
-        header("Access-Control-Max-Age: 3600");
-        exit();
-    }
-    
-    return $result;
-});
-
-// დავამატოთ სესიის მართვა
+// დავამატოთ სესიის მართვის გაუმჯობესებული ვერსია
 add_action('init', function() {
-    if (!session_id()) {
-        session_start();
+    if (PHP_SESSION_NONE === session_status()) {
+        session_start([
+            'cookie_secure' => is_ssl(),
+            'cookie_httponly' => true,
+            'cookie_samesite' => 'Lax',
+            'use_strict_mode' => true
+        ]);
     }
+}, 1);
+
+// შევცვალოთ WooCommerce სესიის კონფიგურაცია
+add_filter('woocommerce_session_handler', function() {
+    return 'WC_Session_Handler';
 });
 
-// დავამატოთ WooCommerce სესიის შენახვა
 add_action('woocommerce_init', function() {
     if (isset(WC()->session) && !WC()->session->has_session()) {
         WC()->session->set_customer_session_cookie(true);
     }
-});
+}, 1);
 
-// მოვახდინოთ CORS headers-ის მოდიფი��აცია
+// დავამატოთ სპეციფიური CORS headers Safari-სთვის
 add_action('rest_api_init', function() {
     remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
     add_filter('rest_pre_serve_request', function($served, $result, $request) {
         $origin = get_http_origin();
-        if ($origin) {
-            header('Access-Control-Allow-Origin: ' . $origin);
-        } else {
-            header('Access-Control-Allow-Origin: *');
-        }
+        $allowed_origin = $origin ?: home_url();
+        
+        header('Access-Control-Allow-Origin: ' . esc_url_raw($allowed_origin));
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
         header('Access-Control-Allow-Credentials: true');
         header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WC-Store-API-Nonce, X-WP-Nonce');
