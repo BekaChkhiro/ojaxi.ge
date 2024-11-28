@@ -522,3 +522,40 @@ add_filter('rest_authentication_errors', function($result) {
     
     return $result;
 });
+
+// დავამატოთ სესიის მართვა
+add_action('init', function() {
+    if (!session_id()) {
+        session_start();
+    }
+});
+
+// დავამატოთ WooCommerce სესიის შენახვა
+add_action('woocommerce_init', function() {
+    if (isset(WC()->session) && !WC()->session->has_session()) {
+        WC()->session->set_customer_session_cookie(true);
+    }
+});
+
+// მოვახდინოთ CORS headers-ის მოდიფიკაცია
+add_action('rest_api_init', function() {
+    remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
+    add_filter('rest_pre_serve_request', function($served, $result, $request) {
+        $origin = get_http_origin();
+        if ($origin) {
+            header('Access-Control-Allow-Origin: ' . $origin);
+        } else {
+            header('Access-Control-Allow-Origin: *');
+        }
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Credentials: true');
+        header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WC-Store-API-Nonce, X-WP-Nonce');
+        
+        if ('OPTIONS' === $_SERVER['REQUEST_METHOD']) {
+            status_header(200);
+            return true;
+        }
+        
+        return $served;
+    }, 10, 3);
+});
