@@ -101,15 +101,6 @@ get_header(); ?>
                         </div>
                     <?php endif; ?>
 
-                    <div class="order-review">
-                        <h2 class="mb-4">შეკვეთის დეტალები</h2>
-                        <?php 
-                        // დავაბრუნოთ შეკვეთის მიმოხილვა
-                        do_action('woocommerce_checkout_before_order_review');
-                        do_action('woocommerce_checkout_order_review');
-                        ?>
-                    </div>
-
                     <div class="payment-section mt-8">
                         <h2 class="mb-4">აირჩიეთ გადახდის მეთოდი</h2>
                         <?php do_action('woocommerce_checkout_payment'); ?>

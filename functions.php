@@ -308,12 +308,12 @@ add_filter('woocommerce_checkout_fields', function($fields) {
     $fields['billing']['billing_city']['priority'] = 40;
     $fields['billing']['billing_city']['required'] = true;
     
-    $fields['billing']['billing_address_1']['label'] = 'მისამარხული';
+    $fields['billing']['billing_address_1']['label'] = 'მისამართი';
     $fields['billing']['billing_address_1']['priority'] = 50;
     $fields['billing']['billing_address_1']['required'] = true;
     
-    $fields['billing']['billing_address_1']['placeholder'] = 'შეკვეთა';
-    $fields['billing']['billing_city']['placeholder'] = 'შეკვეთა';
+    $fields['billing']['billing_address_1']['placeholder'] = 'მისამართი';
+    $fields['billing']['billing_city']['placeholder'] = 'ქალაქი';
     
     $fields['billing']['billing_country'] = array(
         'type' => 'hidden',
@@ -535,7 +535,7 @@ add_action('init', function() {
     }
 }, 1);
 
-// განვაახლოთ WooCommerce Store API-ს CORS კონფიგურაცია
+// განვ��ახლოთ WooCommerce Store API-ს CORS კონფიგურაცია
 add_action('rest_api_init', function() {
     remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
     add_filter('rest_pre_serve_request', function($served, $result, $request) {
@@ -759,4 +759,30 @@ add_action('wp_head', function() {
         </style>
         <?php
     }
+});
+
+// დავმალოთ order review სექცია
+add_action('wp_head', function() {
+    if (is_checkout()) {
+        ?>
+        <style>
+            /* დავმალოთ order review სექცია */
+            .woocommerce-checkout-review-order-table,
+            .woocommerce-checkout-review-order-table * {
+                display: none !important;
+            }
+            
+            /* დავმალოთ შეკვეთის დეტალების სათაური */
+            .order-review h2 {
+                display: none !important;
+            }
+        </style>
+        <?php
+    }
+});
+
+// გავთიშოთ order review-ს hooks
+add_action('init', function() {
+    remove_action('woocommerce_checkout_order_review', 'woocommerce_order_review', 10);
+    remove_action('woocommerce_checkout_order_review', 'woocommerce_checkout_payment', 20);
 });
