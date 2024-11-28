@@ -327,7 +327,7 @@ add_filter('woocommerce_checkout_fields', function($fields) {
         'required' => false
     );
     
-    // დავმალოთ order review-ს ცხრილის ე���ენტები
+    // დავმალოთ order review-ს ცხრილის ეენტები
     add_filter('woocommerce_order_review_order_table_args', function($args) {
         $args['show_cart_contents'] = false;
         return $args;
@@ -431,7 +431,7 @@ function handle_clear_cart_after_order() {
         return;
     }
     
-    // გავასუფთა��თ კალათა
+    // გავასუფთათ კალათა
     WC()->cart->empty_cart();
     
     // დავამატოთ შეკვეთის სტატუსის განახლება (თუ საჭიროა)
