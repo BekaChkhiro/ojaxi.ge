@@ -8,6 +8,14 @@ get_header(); ?>
 <div class="content-area">
     <main id="main" class="site-main">
         <div class="custom-checkout-container p-4">
+            <div class="flex justify-center mb-8">
+                <img 
+                    src="<?php echo get_theme_file_uri('/build/images/ojaxi_logo.33140913.webp'); ?>" 
+                    alt="Ojaxi Logo"
+                    class="h-16 w-auto"
+                />
+            </div>
+            
             <?php
             // დავამატოთ მობილური დეტექციის ლოგიკა
             $is_mobile = wp_is_mobile();
