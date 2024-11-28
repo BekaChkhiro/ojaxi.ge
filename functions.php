@@ -278,8 +278,7 @@ add_action('rest_api_init', function() {
 add_filter('woocommerce_store_api_disable_nonce_check', '__return_true');
 
 // ჩექაუთი ველების მოდიფიკაცია
-add_filter('woocommerce_checkout_fields', 'custom_override_checkout_fields');
-function custom_override_checkout_fields($fields) {
+add_filter('woocommerce_checkout_fields', function($fields) {
     // წავშალოთ არასაჭირო ველები
     unset($fields['billing']['billing_company']);
     unset($fields['billing']['billing_country']);
@@ -328,8 +327,14 @@ function custom_override_checkout_fields($fields) {
         'required' => false
     );
     
+    // დავმალოთ order review-ს ცხრილის ელემენტები
+    add_filter('woocommerce_order_review_order_table_args', function($args) {
+        $args['show_cart_contents'] = false;
+        return $args;
+    });
+    
     return $fields;
-}
+});
 
 // კუპონის ფომის გათიშა
 remove_action('woocommerce_before_checkout_form', 'woocommerce_checkout_coupon_form', 10);
@@ -705,8 +710,53 @@ add_filter('woocommerce_cart_item_name', function($name, $cart_item, $cart_item_
 
 // დავამატოთ ჯამური თანხის ფორმატირება
 add_filter('woocommerce_cart_totals_order_total_html', function($value) {
+    $total = WC()->cart->get_total('edit');
     return sprintf(
         '<span class="amount">%s ₾</span>',
-        number_format(WC()->cart->get_total('edit'), 2)
+        number_format($total, 2)
     );
+});
+
+// მოვაშოროთ ზედმეტი ელემენტები order review-დან
+add_action('wp_head', function() {
+    if (is_checkout()) {
+        ?>
+        <style>
+            /* დავმალოთ ყველა ზედმეტი ელემენტი */
+            .woocommerce-checkout-review-order-table thead,
+            .woocommerce-checkout-review-order-table tbody,
+            .woocommerce-checkout-review-order-table tfoot tr:not(:last-child) {
+                display: none !important;
+            }
+            
+            /* გავაფორმოთ ჯამური თანხის სტრიქონი */
+            .woocommerce-checkout-review-order-table tfoot tr:last-child {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border: none;
+            }
+            
+            .woocommerce-checkout-review-order-table tfoot tr:last-child th {
+                font-size: 16px;
+                font-weight: normal;
+            }
+            
+            .woocommerce-checkout-review-order-table tfoot tr:last-child td {
+                font-size: 18px;
+                font-weight: bold;
+            }
+            
+            /* შევცვალოთ ტექსტი */
+            .woocommerce-checkout-review-order-table tfoot tr:last-child th::before {
+                content: "სულ ჯამი: ";
+            }
+            
+            /* დავმალოთ ორიგინალი ტექსტი */
+            .woocommerce-checkout-review-order-table tfoot tr:last-child th span {
+                display: none;
+            }
+        </style>
+        <?php
+    }
 });
