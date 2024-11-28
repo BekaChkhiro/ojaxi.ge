@@ -327,7 +327,7 @@ add_filter('woocommerce_checkout_fields', function($fields) {
         'required' => false
     );
     
-    // დავმალოთ order review-ს ცხრილის ემენტები
+    // დავმალოთ order review-ს ცხრილის ე���ენტები
     add_filter('woocommerce_order_review_order_table_args', function($args) {
         $args['show_cart_contents'] = false;
         return $args;
@@ -431,7 +431,7 @@ function handle_clear_cart_after_order() {
         return;
     }
     
-    // გავასუფთაოთ კალათა
+    // გავასუფთა��თ კალათა
     WC()->cart->empty_cart();
     
     // დავამატოთ შეკვეთის სტატუსის განახლება (თუ საჭიროა)
@@ -864,7 +864,9 @@ add_action('rest_api_init', function() {
                 $cart->calculate_totals();
                 return new WP_REST_Response(array(
                     'success' => true,
-                    'cart' => WC()->cart->get_cart()
+                    'cart' => array(
+                        'items' => array_values($cart->get_cart())
+                    )
                 ), 200);
             }
             
