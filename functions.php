@@ -287,7 +287,7 @@ function custom_override_checkout_fields($fields) {
     unset($fields['billing']['billing_state']);
     unset($fields['billing']['billing_last_name']);
     
-    // შევცვალოთ დარჩენილი ველების ლეიბლები და პრ���ორიტეტებ���
+    // შევცვალოთ დარჩენილი ველების ლეიბლები და პრიორიტეტები
     $fields['billing']['billing_first_name']['label'] = 'სახელი და გვარი';
     $fields['billing']['billing_first_name']['priority'] = 10;
     
@@ -338,10 +338,10 @@ remove_action('woocommerce_before_checkout_form', 'woocommerce_checkout_coupon_f
 add_filter('woocommerce_cart_item_visible', '__return_false');
 add_filter('woocommerce_cart_item_class', '__return_false');
 
-// ��ეკვეთის ჯამური თანხის სექციის მოდიფიკაცია
+// შეკვეთის ჯამური თანხის სექციის მოდიფიკაცია
 add_filter('woocommerce_checkout_cart_item_visible', '__return_false');
 
-// დამატებითი სტილები რომ დავმალოთ პროდუქტების ხრილი
+// დამატებითი სტილები რომ დავმალოთ პროდუქტების ცხრილი
 add_action('wp_head', 'custom_checkout_css');
 function custom_checkout_css() {
     if (is_checkout()) {
@@ -510,26 +510,9 @@ add_action('init', function() {
         session_start(array(
             'cookie_secure' => is_ssl(),
             'cookie_httponly' => true,
-            'cookie_samesite' => 'Lax',
+            'cookie_samesite' => 'None',
             'use_strict_mode' => true
         ));
-    }
-    
-    // დავაყენოთ სესიის cookie პარამეტრები
-    if (!headers_sent()) {
-        $cookie_params = session_get_cookie_params();
-        setcookie(
-            session_name(),
-            session_id(),
-            [
-                'expires' => time() + 86400,
-                'path' => '/',
-                'domain' => $_SERVER['HTTP_HOST'],
-                'secure' => is_ssl(),
-                'httponly' => true,
-                'samesite' => 'Lax'
-            ]
-        );
     }
 }, 1);
 
@@ -571,26 +554,9 @@ add_action('init', function() {
         session_start(array(
             'cookie_secure' => is_ssl(),
             'cookie_httponly' => true,
-            'cookie_samesite' => 'Lax',
+            'cookie_samesite' => 'None',
             'use_strict_mode' => true
         ));
-    }
-    
-    // დავაყენოთ სესიის cookie პარამეტრები
-    if (!headers_sent()) {
-        $cookie_params = session_get_cookie_params();
-        setcookie(
-            session_name(),
-            session_id(),
-            [
-                'expires' => time() + 86400,
-                'path' => '/',
-                'domain' => $_SERVER['HTTP_HOST'],
-                'secure' => is_ssl(),
-                'httponly' => true,
-                'samesite' => 'Lax'
-            ]
-        );
     }
 }, 1);
 
@@ -603,14 +569,6 @@ add_action('woocommerce_init', function() {
     if (isset(WC()->session) && !WC()->session->has_session()) {
         WC()->session->set_customer_session_cookie(true);
     }
-    
-    // დავრწმუნდეთ რომ კალათა ინიციალიზებულია
-    if (!WC()->session->get('cart')) {
-        WC()->session->set('cart', array());
-    }
-    
-    // განვაახლოთ სესიის ვადა
-    WC()->session->set_customer_session_cookie(true);
 }, 1);
 
 // დავამატოთ სპეციფიური CORS headers Safari-სთვის
@@ -618,27 +576,16 @@ add_action('rest_api_init', function() {
     remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
     add_filter('rest_pre_serve_request', function($served, $result, $request) {
         $origin = get_http_origin();
-        $allowed_origins = array(
-            home_url(),
-            'http://localhost:3000',
-            'http://localhost'
-        );
+        $allowed_origin = $origin ?: home_url();
         
-        if (in_array($origin, $allowed_origins)) {
-            header('Access-Control-Allow-Origin: ' . esc_url_raw($origin));
-        } else {
-            header('Access-Control-Allow-Origin: ' . esc_url_raw(home_url()));
-        }
-        
+        header('Access-Control-Allow-Origin: ' . esc_url_raw($allowed_origin));
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
         header('Access-Control-Allow-Credentials: true');
         header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WC-Store-API-Nonce, X-WP-Nonce');
-        header('Access-Control-Expose-Headers: *');
-        header('Vary: Origin');
         
         if ('OPTIONS' === $_SERVER['REQUEST_METHOD']) {
             status_header(200);
-            exit();
+            return true;
         }
         
         return $served;
@@ -729,88 +676,3 @@ add_action('rest_api_init', function() {
         return $served;
     }, 10, 3);
 });
-
-// დავამატოთ კალათის სესიის შენახვის დამატებითი ლოგიკა
-add_action('woocommerce_cart_loaded_from_session', function($cart) {
-    if (empty($cart->get_cart_contents())) {
-        $session_cart = WC()->session->get('cart');
-        if (!empty($session_cart)) {
-            foreach ($session_cart as $cart_item_key => $cart_item) {
-                $cart->add_to_cart(
-                    $cart_item['product_id'],
-                    $cart_item['quantity'],
-                    isset($cart_item['variation_id']) ? $cart_item['variation_id'] : 0,
-                    isset($cart_item['variation']) ? $cart_item['variation'] : array()
-                );
-            }
-        }
-    }
-});
-
-// შევცვალოთ CORS და სესიების კონფიგურაცია
-add_action('init', function() {
-    // შევამოწმოთ WooCommerce-ის არსებობა
-    if (!class_exists('WooCommerce')) {
-        return;
-    }
-
-    // დავიწყოთ სესია თუ არ არის დაწყებული
-    if (PHP_SESSION_NONE === session_status()) {
-        session_start([
-            'cookie_secure' => is_ssl(),
-            'cookie_httponly' => true,
-            'cookie_samesite' => 'Lax',
-            'use_strict_mode' => true
-        ]);
-    }
-
-    // გავაუქმოთ ძველი CORS ფილტრები
-    remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
-}, 1);
-
-// განვაახლოთ CORS კონფიგურაცია
-add_action('rest_api_init', function() {
-    add_filter('rest_pre_serve_request', function($served, $result, $request) {
-        $origin = get_http_origin();
-        
-        if ($origin === false) {
-            $origin = home_url();
-        }
-
-        header('Access-Control-Allow-Origin: ' . esc_url_raw($origin));
-        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-        header('Access-Control-Allow-Credentials: true');
-        header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WC-Store-API-Nonce, X-WP-Nonce');
-        header('Access-Control-Expose-Headers: X-WC-Store-API-Nonce');
-        
-        if ('OPTIONS' === $_SERVER['REQUEST_METHOD']) {
-            status_header(200);
-            exit();
-        }
-
-        return $served;
-    }, 10, 3);
-});
-
-// დავამატოთ WooCommerce სესიის მართვის გაუმჯობესებული ლოგიკა
-add_action('woocommerce_init', function() {
-    if (!is_admin()) {
-        if (isset(WC()->session) && !WC()->session->has_session()) {
-            WC()->session->set_customer_session_cookie(true);
-        }
-    }
-});
-
-// გამოვრთოთ WooCommerce Store API-ს nonce შემოწმება
-add_filter('woocommerce_store_api_disable_nonce_check', '__return_true');
-
-// დავამატოთ error reporting დებაგინგისთვის
-if (!defined('WP_DEBUG')) {
-    define('WP_DEBUG', true);
-}
-if (!defined('WP_DEBUG_LOG')) {
-    define('WP_DEBUG_LOG', true);
-}
-if (!defined('WP_DEBUG_DISPLAY')) {
-    define('WP_DEBUG_DISPLAY', false);
-}
