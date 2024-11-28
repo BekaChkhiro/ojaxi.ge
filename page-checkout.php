@@ -102,20 +102,20 @@ get_header(); ?>
                     <?php endif; ?>
 
                     <div class="order-review">
-                        <h2 class="mb-4">შეკვეთის დეტალები</h2>
-                        <?php 
-                        // დხოლოდ სულ ჯამის გამოტანა
-                        $total = WC()->cart->get_total();
-                        ?>
                         <div class="total-row flex justify-between items-center">
                             <span class="total-label">სულ ჯამი:</span>
                             <span class="total-amount"><?php echo number_format(WC()->cart->get_total('edit'), 2); ?> ₾</span>
                         </div>
                     </div>
 
-                    <div class="payment-section mt-8">
-                        <h2 class="mb-4">აირჩიეთ გადახდის მეთოდი</h2>
-                        <?php do_action('woocommerce_checkout_payment'); ?>
+                    <div id="payment" class="woocommerce-checkout-payment">
+                        <div class="payment-section mt-8">
+                            <h2 class="mb-4">აირჩიეთ გადახდის მეთოდი</h2>
+                            <?php 
+                            // გადახდის მეთოდების გამოტანა
+                            do_action('woocommerce_checkout_payment'); 
+                            ?>
+                        </div>
                     </div>
                 </form>
                 <?php
