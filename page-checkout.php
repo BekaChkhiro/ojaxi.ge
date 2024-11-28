@@ -12,7 +12,7 @@ get_header(); ?>
                 <img 
                     src="<?php echo get_theme_file_uri('/build/images/ojaxi_logo.33140913.webp'); ?>" 
                     alt="Ojaxi Logo"
-                    class="h-16 w-auto"
+                    class="h-8 w-auto"
                 />
             </div>
             
