@@ -286,7 +286,7 @@ function custom_override_checkout_fields($fields) {
     $fields['billing']['billing_city']['priority'] = 40;
     $fields['billing']['billing_city']['required'] = true;
     
-    $fields['billing']['billing_address_1']['label'] = 'მისამარ���ი';
+    $fields['billing']['billing_address_1']['label'] = 'მისამარხული';
     $fields['billing']['billing_address_1']['priority'] = 50;
     $fields['billing']['billing_address_1']['required'] = true;
     
@@ -426,17 +426,9 @@ add_action('wp_enqueue_scripts', function() {
 // დავამატოთ WooCommerce Store API-ს endpoint-ები
 add_action('rest_api_init', function() {
     register_rest_route('wc/store/v1', '/cart/items/(?P<key>[a-zA-Z0-9_-]+)', array(
-        'methods' => 'DELETE',
+        'methods' => WP_REST_Server::DELETABLE,
         'callback' => 'handle_remove_cart_item',
-        'permission_callback' => '__return_true',
-        'args' => array(
-            'key' => array(
-                'required' => true,
-                'validate_callback' => function($param) {
-                    return is_string($param);
-                }
-            )
-        )
+        'permission_callback' => '__return_true'
     ));
 });
 
@@ -454,7 +446,7 @@ function handle_remove_cart_item($request) {
         $cart->calculate_totals();
         return new WP_REST_Response(array(
             'success' => true,
-            'cart' => $cart->get_cart()
+            'cart' => WC()->cart->get_cart_for_session()
         ), 200);
     }
     
@@ -465,29 +457,25 @@ function handle_remove_cart_item($request) {
 add_action('rest_api_init', function() {
     remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
     add_filter('rest_pre_serve_request', function($served, $result, $request) {
-        header('Access-Control-Allow-Origin: ' . esc_url_raw(site_url()));
-        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-        header('Access-Control-Allow-Credentials: true');
-        header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WC-Store-API-Nonce');
-        
-        if ('OPTIONS' === $_SERVER['REQUEST_METHOD']) {
-            status_header(200);
-            return true;
+        if (strpos($request->get_route(), '/wc/store/') !== false) {
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WC-Store-API-Nonce');
         }
-        
         return $served;
     }, 10, 3);
 });
 
 // დევცვალოთ add_wc_store_api_nonce ფუნქცია
 function add_wc_store_api_nonce() {
-    wp_enqueue_script('wc-store-api-settings', null, array(), null);
-    wp_add_inline_script('wc-store-api-settings', sprintf(
+    wp_enqueue_script('wc-store-api-nonce', null, array(), null);
+    wp_add_inline_script('wc-store-api-nonce', sprintf(
         'window.wcStoreApiSettings = %s;',
         wp_json_encode(array(
             'nonce' => wp_create_nonce('wc_store_api'),
             'root' => esc_url_raw(rest_url()),
-            'storeApiRoot' => esc_url_raw(rest_url('wc/store/v1')),
+            'storeApiRoot' => esc_url_raw(rest_url('wc/store/v1'))
         ))
     ));
 }
