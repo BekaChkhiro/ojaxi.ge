@@ -278,7 +278,7 @@ function custom_override_checkout_fields($fields) {
     $fields['billing']['billing_phone']['priority'] = 20;
     
     $fields['billing']['billing_phone_alt'] = array(
-        'label' => 'სხვა საქოტაქტო',
+        'label' => 'სხვა საქოტაქტ��',
         'required' => false,
         'type' => 'tel',
         'class' => array('form-row-wide'),
@@ -531,7 +531,7 @@ add_action('woocommerce_init', function() {
     }
 });
 
-// მოვახდინოთ CORS headers-ის მოდიფიკაცია
+// მოვახდინოთ CORS headers-ის მოდიფი��აცია
 add_action('rest_api_init', function() {
     remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
     add_filter('rest_pre_serve_request', function($served, $result, $request) {
@@ -615,4 +615,26 @@ add_action('rest_api_init', function() {
         },
         'permission_callback' => '__return_true'
     ));
+});
+
+// დავამატოთ WooCommerce Store API nonce
+add_action('wp_enqueue_scripts', function() {
+    wp_localize_script('react-app', 'wcStoreApiSettings', array(
+        'nonce' => wp_create_nonce('wc_store_api'),
+        'storeApiRoot' => rest_url('wc/store/v1')
+    ));
+});
+
+// CORS-ის კონფიგურაცია WooCommerce Store API-სთვის
+add_action('rest_api_init', function() {
+    remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
+    add_filter('rest_pre_serve_request', function($served, $result, $request) {
+        if (strpos($request->get_route(), '/wc/store/') !== false) {
+            header('Access-Control-Allow-Origin: ' . esc_url_raw(home_url()));
+            header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WC-Store-API-Nonce');
+        }
+        return $served;
+    }, 10, 3);
 });
