@@ -28,8 +28,8 @@ add_action('wp_head', function() {
 ?>
 
 <div class="content-area">
-    <main id="main" class="site-main">
-        <div class="custom-checkout-container">
+    <main id="main" class="site-main flex justify-center">
+        <div class="custom-checkout-container p-4 w-full lg:w-4/6">
             <div class="flex justify-center mb-8">
                 <a href="/">
                 <img 
