@@ -3,7 +3,29 @@
  * Template Name: Checkout Page
  */
 
-get_header(); ?>
+get_header(); 
+
+// დავამატოთ სტილები
+add_action('wp_head', function() {
+    if (is_checkout()) {
+        ?>
+        <style>
+            .custom-checkout-container {
+                padding: 1rem;
+                margin: 0 auto;
+                width: 100%;
+            }
+
+            @media screen and (min-width: 768px) {
+                .custom-checkout-container {
+                    max-width: 600px;
+                }
+            }
+        </style>
+        <?php
+    }
+});
+?>
 
 <div class="content-area">
     <main id="main" class="site-main">

@@ -203,14 +203,3 @@
     width: 100%!important;
 }
 
-.custom-checkout-container {
-    padding: 1rem;
-    margin: 0 auto;
-    width: 100%;
-}
-
-@media screen and (min-width: 768px) {
-    .custom-checkout-container {
-        max-width: 600px;
-    }
-}
