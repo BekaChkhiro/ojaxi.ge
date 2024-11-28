@@ -104,10 +104,13 @@ get_header(); ?>
                     <div class="order-review">
                         <h2 class="mb-4">შეკვეთის დეტალები</h2>
                         <?php 
-                        // დავაბრუნოთ შეკვეთის მიმოხილვა
-                        do_action('woocommerce_checkout_before_order_review');
-                        do_action('woocommerce_checkout_order_review');
+                        // დხოლოდ სულ ჯამის გამოტანა
+                        $total = WC()->cart->get_total();
                         ?>
+                        <div class="total-row flex justify-between items-center">
+                            <span class="total-label">სულ ჯამი:</span>
+                            <span class="total-amount"><?php echo number_format(WC()->cart->get_total('edit'), 2); ?> ₾</span>
+                        </div>
                     </div>
 
                     <div class="payment-section mt-8">

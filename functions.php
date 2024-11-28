@@ -760,3 +760,44 @@ add_action('wp_head', function() {
         <?php
     }
 });
+
+add_action('wp_head', function() {
+    if (is_checkout()) {
+        ?>
+        <style>
+            /* დავმალოთ ორიგინალი order review ცხრილი */
+            .woocommerce-checkout-review-order-table {
+                display: none !important;
+            }
+            
+            /* გავაფორმოთ სულ ჯამის სტრიქონი */
+            .total-row {
+                padding: 15px 0;
+                border-top: 1px solid #eee;
+                margin-top: 15px;
+            }
+            
+            .total-label {
+                font-size: 16px;
+                font-weight: normal;
+            }
+            
+            .total-amount {
+                font-size: 18px;
+                font-weight: bold;
+            }
+            
+            /* დავმალოთ "Total" ტექსტი */
+            .order-total th > span,
+            .includes_tax {
+                display: none !important;
+            }
+        </style>
+        <?php
+    }
+});
+
+// გავთიშოთ სტანდარტული order review
+add_action('init', function() {
+    remove_action('woocommerce_checkout_order_review', 'woocommerce_order_review', 10);
+});
