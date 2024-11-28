@@ -7,7 +7,7 @@ get_header(); ?>
 
 <div class="content-area">
     <main id="main" class="site-main">
-        <div class="custom-checkout-container p-4 mx-auto md:max-w-[600px]">
+        <div class="custom-checkout-container">
             <div class="flex justify-center mb-8">
                 <a href="/">
                 <img 
