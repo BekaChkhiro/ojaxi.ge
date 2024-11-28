@@ -589,7 +589,7 @@ add_action('rest_api_init', function() {
     ));
 });
 
-// დავამატოთ ახალი endpoint კალათის განახლებისთვის
+// დავამატოთ ახალი endpoint კალათის ���ანახლებისთვის
 add_action('rest_api_init', function() {
     register_rest_route('wc/store/v1', '/cart/update-item', array(
         'methods' => 'POST',
@@ -641,3 +641,49 @@ add_action('rest_api_init', function() {
         'permission_callback' => '__return_true'
     ));
 });
+
+// დავამატოთ endpoint კალათიდან პროდუქტის დასამატებლად
+add_action('rest_api_init', function() {
+    register_rest_route('wc/store/v1', '/cart/add-item', array(
+        'methods' => 'POST',
+        'callback' => function($request) {
+            $params = $request->get_params();
+            $product_id = isset($params['id']) ? intval($params['id']) : 0;
+            $quantity = isset($params['quantity']) ? intval($params['quantity']) : 1;
+            
+            if (!$product_id) {
+                return new WP_Error('invalid_product', 'Invalid product ID', array('status' => 400));
+            }
+            
+            // დავამატოთ პროდუქტი კალათაში
+            $cart_item_key = WC()->cart->add_to_cart($product_id, $quantity);
+            
+            if ($cart_item_key) {
+                WC()->cart->calculate_totals();
+                return new WP_REST_Response(array(
+                    'success' => true,
+                    'cart' => WC()->cart->get_cart()
+                ), 200);
+            }
+            
+            return new WP_Error('add_to_cart_failed', 'Failed to add item to cart', array('status' => 500));
+        },
+        'permission_callback' => '__return_true'
+    ));
+});
+
+// დავამატოთ CORS headers
+add_action('rest_api_init', function() {
+    remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
+    add_filter('rest_pre_serve_request', function($value) {
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Credentials: true');
+        header('Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization, X-WC-Store-API-Nonce');
+        
+        return $value;
+    });
+}, 15);
+
+// გავთიშოთ nonce ვერიფიკაცია დროებით (დეველოპმენტისთვის)
+add_filter('woocommerce_store_api_disable_nonce_check', '__return_true');
