@@ -576,3 +576,37 @@ add_action('rest_api_init', function() {
         'permission_callback' => '__return_true'
     ));
 });
+
+add_action('rest_api_init', function() {
+    register_rest_route('wc/store/v1', '/cart/add-item', array(
+        'methods' => 'POST',
+        'callback' => function($request) {
+            $params = $request->get_params();
+            $product_id = isset($params['id']) ? intval($params['id']) : 0;
+            $quantity = isset($params['quantity']) ? intval($params['quantity']) : 1;
+            
+            if (empty($product_id)) {
+                return new WP_Error('missing_id', 'Product ID is required', array('status' => 400));
+            }
+            
+            $cart = WC()->cart;
+            
+            // წავშალოთ არსებული პროდუქტები კალათიდან
+            $cart->empty_cart();
+            
+            // დავამატოთ პროდუქტი
+            $added = $cart->add_to_cart($product_id, $quantity);
+            
+            if ($added) {
+                $cart->calculate_totals();
+                return new WP_REST_Response(array(
+                    'success' => true,
+                    'cart' => WC()->cart->get_cart()
+                ), 200);
+            }
+            
+            return new WP_Error('add_failed', 'Failed to add item to cart', array('status' => 500));
+        },
+        'permission_callback' => '__return_true'
+    ));
+});
