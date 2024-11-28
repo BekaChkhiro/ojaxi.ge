@@ -308,7 +308,7 @@ function custom_override_checkout_fields($fields) {
     return $fields;
 }
 
-// კუპონის ფო��მის გათიშ���ა
+// კუპონის ფომის გათიშა
 remove_action('woocommerce_before_checkout_form', 'woocommerce_checkout_coupon_form', 10);
 
 // შეკვეთის დეტალების დამალვა
@@ -410,7 +410,7 @@ function handle_order_completion($order_id) {
         // გავასუფთაოთ კალათა
         WC()->cart->empty_cart();
         
-        // დავამა��ოთ ქმედებ��� შეკვეთის დასრულებისას
+        // დავამატოთ ქმედებ შეკვეთის დასრულებისას
         do_action('custom_order_completed', $order_id);
     }
 }
@@ -478,3 +478,17 @@ add_action('rest_api_init', function() {
         return $served;
     }, 10, 3);
 });
+
+// დავამატოთ WooCommerce Store API Settings
+function add_wc_store_api_nonce() {
+    wp_enqueue_script('wc-store-api-settings', null, array(), null, true);
+    wp_add_inline_script('wc-store-api-settings', sprintf(
+        'window.wcStoreApiSettings = %s;',
+        wp_json_encode(array(
+            'nonce' => wp_create_nonce('wc_store_api'),
+            'root' => esc_url_raw(rest_url()),
+            'storeApiRoot' => esc_url_raw(rest_url('wc/store/v1')),
+        ))
+    ));
+}
+add_action('wp_enqueue_scripts', 'add_wc_store_api_nonce', 10);
