@@ -17,42 +17,8 @@ get_header(); ?>
             </div>
             
             <?php
-            // დავამატოთ მობილური დეტექციის ლოგიკა
-            $is_mobile = wp_is_mobile();
-            
-            if (WC()->cart->is_empty() && !$is_mobile) {
-                // მადლობის გვერდის HTML მხოლოდ დესკტოპზე
-                ?>
-                <div class="flex flex-col items-center justify-center p-8 text-center">
-                    <div class="w-16 h-16 bg-[#1a691a] rounded-full flex items-center justify-center mb-6">
-                        <svg 
-                            class="w-8 h-8 text-white" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24"
-                        >
-                            <path 
-                                stroke-linecap="round" 
-                                stroke-linejoin="round" 
-                                stroke-width="2" 
-                                d="M5 13l4 4L19 7"
-                            />
-                        </svg>
-                    </div>
-                    <h2 class="text-2xl font-semibold mb-4">მადლობა შეკვეთისთვის!</h2>
-                    <p class="text-gray-600 mb-8">თქვენი შეკვეთა წარმატებით გაფორმდა</p>
-                </div>
-                <script>
-                    setTimeout(function() {
-                        window.top.location.href = '<?php echo home_url(); ?>';
-                    }, 3000);
-                </script>
-                <?php
-                return;
-            }
-            
-            // მობილურზე გადამისამართება მთავარ გვერდზე
-            if (WC()->cart->is_empty() && $is_mobile) {
+            // დევცვალოთ მობილურის დეტექციის ლოგიკა
+            if (WC()->cart->is_empty()) {
                 ?>
                 <script>
                     window.location.href = '<?php echo home_url(); ?>';
@@ -111,10 +77,7 @@ get_header(); ?>
                     <div id="payment" class="woocommerce-checkout-payment">
                         <div class="payment-section mt-8">
                             <h2 class="mb-4">აირჩიეთ გადახდის მეთოდი</h2>
-                            <?php 
-                            // გადახდის მეთოდების გამოტანა
-                            do_action('woocommerce_checkout_payment'); 
-                            ?>
+                            <?php do_action('woocommerce_checkout_payment'); ?>
                         </div>
                     </div>
                 </form>
