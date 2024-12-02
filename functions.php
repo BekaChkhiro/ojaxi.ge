@@ -410,7 +410,7 @@ add_action('wp_enqueue_scripts', function() {
     ));
 });
 
-// დავამატოთ AJAX handler კალათი გასასუფთავებლად
+// დავამატოთ AJAX handler კალათი გასასუფთავებლ���დ
 add_action('wp_ajax_clear_cart_after_order', 'handle_clear_cart_after_order');
 add_action('wp_ajax_nopriv_clear_cart_after_order', 'handle_clear_cart_after_order');
 
@@ -875,3 +875,6 @@ add_action('rest_api_init', function() {
         'permission_callback' => '__return_true'
     ));
 });
+
+// ჩართეთ custom-post-types.php ფაილი
+require_once get_template_directory() . '/custom-post-types.php';
