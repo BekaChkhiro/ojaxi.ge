@@ -930,15 +930,16 @@ add_filter('rest_nonce_required_actions', function($required) {
 
 // დავამატოთ ახალი custom endpoint გათამაშებისთვის
 add_action('rest_api_init', function() {
-    register_rest_route('custom/v1', '/gatashoreba', array(
+    register_rest_route('custom/v1', '/gatamasheba', array(
         'methods' => 'POST',
         'callback' => function($request) {
             $params = $request->get_params();
             
             // შევქმნათ ახალი პოსტი
             $post_data = array(
-                'post_type' => 'gatashoreba',
+                'post_type' => 'gatamasheba',
                 'post_status' => 'publish',
+                'post_title' => 'temp_title' // დროებითი სათაური
             );
             
             $post_id = wp_insert_post($post_data);
@@ -946,6 +947,13 @@ add_action('rest_api_init', function() {
             if (is_wp_error($post_id)) {
                 return new WP_Error('create_failed', 'Failed to create post', array('status' => 500));
             }
+            
+            // დავვაახლოთ სათაური ID-ის მიხედვით
+            $post_title = 'Ojaxi#' . $post_id;
+            wp_update_post(array(
+                'ID' => $post_id,
+                'post_title' => $post_title
+            ));
             
             // დავამატოთ მეტა მონაცემები
             update_post_meta($post_id, '_phone', sanitize_text_field($params['phone']));
@@ -955,7 +963,7 @@ add_action('rest_api_init', function() {
             // შევამოწმოთ ტელეფონის ნომრის დუბლირება
             $normalized_phone = normalize_phone_number($params['phone']);
             $existing_posts = get_posts(array(
-                'post_type' => 'gatashoreba',
+                'post_type' => 'gatamasheba',
                 'meta_query' => array(
                     array(
                         'key' => '_phone_normalized',
@@ -980,38 +988,9 @@ add_action('rest_api_init', function() {
             
             return new WP_REST_Response(array(
                 'success' => true,
-                'post_id' => $post_id
+                'post_id' => $post_id,
+                'post_title' => $post_title // დავაბრუნოთ პოსტის სათაური
             ), 200);
-        },
-        'permission_callback' => '__return_true'
-    ));
-});
-
-// დავამატოთ endpoint ბოლო მონაწილეების მისაღებად
-add_action('rest_api_init', function() {
-    register_rest_route('custom/v1', '/recent-gatamasheba', array(
-        'methods' => 'GET',
-        'callback' => function() {
-            $args = array(
-                'post_type' => 'gatamasheba',
-                'posts_per_page' => 10,
-                'orderby' => 'date',
-                'order' => 'DESC'
-            );
-            
-            $posts = get_posts($args);
-            $users = array();
-            
-            foreach ($posts as $post) {
-                $users[] = array(
-                    'id' => $post->ID,
-                    'first_name' => get_post_meta($post->ID, '_first_name', true),
-                    'last_name' => get_post_meta($post->ID, '_last_name', true),
-                    'phone' => get_post_meta($post->ID, '_phone', true)
-                );
-            }
-            
-            return new WP_REST_Response($users, 200);
         },
         'permission_callback' => '__return_true'
     ));
