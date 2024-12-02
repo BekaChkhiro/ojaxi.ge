@@ -452,7 +452,7 @@ function handle_order_completion($order_id) {
         // გავასუფთაოთ კალათა
         WC()->cart->empty_cart();
         
-        // დავამატოთ ქმედებ შეკვეთის ���ასრულებისას
+        // დავამატოთ ქმედებ შეკვეთის დასრულებისას
         do_action('custom_order_completed', $order_id);
     }
 }
@@ -567,7 +567,7 @@ add_action('rest_api_init', function() {
     }, 10, 3);
 });
 
-// დავამატოთ ს��სიის გაუმჯობესებული კონფიგურაცია
+// დავამატოთ სესიის გაუმჯობესებული კონფიგურაცია
 add_action('init', function() {
     if (PHP_SESSION_NONE === session_status()) {
         session_start(array(
@@ -880,8 +880,12 @@ add_action('rest_api_init', function() {
 require_once get_template_directory() . '/custom-post-types.php';
 
 function verify_recaptcha($recaptcha_token) {
-    $secret_key = '6LceIZAqAAAAAFW6s4kc9iBesjJi2uPUlqETozEu';
+    $secret_key = '6Lc8IpAqAAAAAEMj0ikZIt8fVgFmJ_7iqmkNy-07';
     
+    if (empty($recaptcha_token)) {
+        return false;
+    }
+
     $verify_url = 'https://www.google.com/recaptcha/api/siteverify';
     $response = wp_remote_post($verify_url, array(
         'body' => array(
@@ -895,7 +899,7 @@ function verify_recaptcha($recaptcha_token) {
     }
 
     $response_body = json_decode(wp_remote_retrieve_body($response), true);
-    return $response_body['success'];
+    return isset($response_body['success']) && $response_body['success'] === true;
 }
 
 add_action('rest_api_init', function() {
