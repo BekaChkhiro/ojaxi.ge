@@ -410,7 +410,7 @@ add_action('wp_enqueue_scripts', function() {
     ));
 });
 
-// დავამატოთ AJAX handler კალათი გასასუფთავებლ���დ
+// დავამატოთ AJAX handler კალათი გასასუფთავებლდ
 add_action('wp_ajax_clear_cart_after_order', 'handle_clear_cart_after_order');
 add_action('wp_ajax_nopriv_clear_cart_after_order', 'handle_clear_cart_after_order');
 
@@ -878,3 +878,91 @@ add_action('rest_api_init', function() {
 
 // ჩართეთ custom-post-types.php ფაილი
 require_once get_template_directory() . '/custom-post-types.php';
+
+function verify_recaptcha($recaptcha_token) {
+    $secret_key = '6LceIZAqAAAAAFW6s4kc9iBesjJi2uPUlqETozEu';
+    
+    $verify_url = 'https://www.google.com/recaptcha/api/siteverify';
+    $response = wp_remote_post($verify_url, array(
+        'body' => array(
+            'secret' => $secret_key,
+            'response' => $recaptcha_token
+        )
+    ));
+
+    if (is_wp_error($response)) {
+        return false;
+    }
+
+    $response_body = json_decode(wp_remote_retrieve_body($response), true);
+    return $response_body['success'];
+}
+
+add_action('rest_api_init', function() {
+    register_rest_route('custom/v1', '/gatashoreba', array(
+        'methods' => 'POST',
+        'callback' => 'custom_gatashoreba_handler',
+        'permission_callback' => '__return_true',
+    ));
+});
+
+function custom_gatashoreba_handler($request) {
+    $recaptcha = $request->get_param('recaptcha');
+    
+    // შევამოწმოთ რეკაპჩა
+    if (!$recaptcha || !verify_recaptcha($recaptcha)) {
+        return new WP_Error(
+            'invalid_recaptcha',
+            'რეკაპჩას ვერიფიკაცია ვერ მოხერხდა',
+            array('status' => 400)
+        );
+    }
+
+    $meta = $request->get_param('meta');
+    $phone = isset($meta['_phone']) ? $meta['_phone'] : '';
+    
+    // ნომრის ნორმალიზაცია
+    $normalized_phone = normalize_phone_number($phone);
+    
+    // შევამოწმოთ არსებობს თუ არა უკვე ეს ნომერი
+    $existing_posts = get_posts(array(
+        'post_type' => 'gatashoreba',
+        'meta_query' => array(
+            array(
+                'key' => '_phone_normalized',
+                'value' => $normalized_phone
+            )
+        ),
+        'posts_per_page' => 1
+    ));
+
+    if (!empty($existing_posts)) {
+        return new WP_Error(
+            'phone_exists',
+            'ეს ნომერი უკვე დარეგისტრირებულია',
+            array('status' => 400)
+        );
+    }
+
+    // შევქმნათ პოსტი
+    $post_id = wp_insert_post(array(
+        'post_type' => 'gatashoreba',
+        'post_status' => 'publish',
+        'post_title' => 'Ojaxi#' . get_next_post_id(),
+        'meta_input' => array(
+            '_phone' => $meta['_phone'],
+            '_phone_normalized' => $normalized_phone,
+            '_first_name' => $meta['_first_name'],
+            '_last_name' => $meta['_last_name'],
+        ),
+    ));
+
+    if (is_wp_error($post_id)) {
+        return new WP_Error('post_creation_failed', 'პოსტის შექმნა ვერ მოხერხდა', array('status' => 500));
+    }
+
+    return array(
+        'success' => true,
+        'post_id' => $post_id
+    );
+}
