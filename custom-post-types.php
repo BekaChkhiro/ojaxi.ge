@@ -1,7 +1,7 @@
 <?php
 // გათამაშების პოსტ ტაიპის რეგისტრაცია
 add_action('init', function() {
-    register_post_type('gatashoreba', array(
+    register_post_type('gatamasheba', array(
         'labels' => array(
             'name' => 'გათამაშებები',
             'singular_name' => 'გათამაშება',
@@ -19,10 +19,10 @@ add_action('init', function() {
 // მეტა ველების დამატება
 add_action('add_meta_boxes', function() {
     add_meta_box(
-        'gatashoreba_details',
+        'gatamasheba_details',
         'მონაწილის დეტალები',
-        'render_gatashoreba_fields',
-        'gatashoreba',
+        'render_gatamasheba_fields',
+        'gatamasheba',
         'normal',
         'high'
     );
@@ -50,7 +50,7 @@ function format_phone_for_display($phone) {
 }
 
 // ადმინ პანელში ქოლუმების მართვა
-add_filter('manage_gatashoreba_posts_columns', function($columns) {
+add_filter('manage_gatamasheba_posts_columns', function($columns) {
     $new_columns = array();
     $new_columns['cb'] = $columns['cb'];
     $new_columns['title'] = 'ID';
@@ -60,7 +60,7 @@ add_filter('manage_gatashoreba_posts_columns', function($columns) {
     return $new_columns;
 });
 
-add_action('manage_gatashoreba_posts_custom_column', function($column, $post_id) {
+add_action('manage_gatamasheba_posts_custom_column', function($column, $post_id) {
     switch ($column) {
         case 'phone':
             $phone = get_post_meta($post_id, '_phone', true);
@@ -75,30 +75,30 @@ add_action('manage_gatashoreba_posts_custom_column', function($column, $post_id)
 }, 10, 2);
 
 // მეტა ველების რენდერი
-function render_gatashoreba_fields($post) {
+function render_gatamasheba_fields($post) {
     $phone = get_post_meta($post->ID, '_phone', true);
     $first_name = get_post_meta($post->ID, '_first_name', true);
     $last_name = get_post_meta($post->ID, '_last_name', true);
     
-    wp_nonce_field('gatashoreba_nonce', 'gatashoreba_nonce');
+    wp_nonce_field('gatamasheba_nonce', 'gatamasheba_nonce');
     ?>
     <style>
-        .gatashoreba-field { margin-bottom: 15px; }
-        .gatashoreba-field label { display: block; margin-bottom: 5px; }
-        .gatashoreba-field input { width: 100%; }
+        .gatamasheba-field { margin-bottom: 15px; }
+        .gatamasheba-field label { display: block; margin-bottom: 5px; }
+        .gatamasheba-field input { width: 100%; }
     </style>
     
-    <div class="gatashoreba-field">
+    <div class="gatamasheba-field">
         <label for="phone">ტელეფონი:</label>
         <input type="tel" id="phone" name="phone" value="<?php echo esc_attr(format_phone_for_display($phone)); ?>">
     </div>
     
-    <div class="gatashoreba-field">
+    <div class="gatamasheba-field">
         <label for="first_name">სახელი:</label>
         <input type="text" id="first_name" name="first_name" value="<?php echo esc_attr($first_name); ?>">
     </div>
     
-    <div class="gatashoreba-field">
+    <div class="gatamasheba-field">
         <label for="last_name">გვარი:</label>
         <input type="text" id="last_name" name="last_name" value="<?php echo esc_attr($last_name); ?>">
     </div>
@@ -106,8 +106,8 @@ function render_gatashoreba_fields($post) {
 }
 
 // მეტა ველების შენახვა
-add_action('save_post_gatashoreba', function($post_id) {
-    if (!isset($_POST['gatashoreba_nonce']) || !wp_verify_nonce($_POST['gatashoreba_nonce'], 'gatashoreba_nonce')) {
+add_action('save_post_gatamasheba', function($post_id) {
+    if (!isset($_POST['gatamasheba_nonce']) || !wp_verify_nonce($_POST['gatamasheba_nonce'], 'gatamasheba_nonce')) {
         return;
     }
     
@@ -126,8 +126,8 @@ add_action('save_post_gatashoreba', function($post_id) {
     // სათაურის ავტომატური გენერაცია
     $title = 'Ojaxi#' . $post_id;
     
-    // გამოვრთოთ save_post_gatashoreba hook-ის გამოძახება
-    remove_action('save_post_gatashoreba', 'wp_insert_post');
+    // გამოვრთოთ save_post_gatamasheba hook-ის გამოძახება
+    remove_action('save_post_gatamasheba', 'wp_insert_post');
     
     wp_update_post(array(
         'ID' => $post_id,
@@ -135,12 +135,12 @@ add_action('save_post_gatashoreba', function($post_id) {
     ));
     
     // დავაბრუნოთ hook
-    add_action('save_post_gatashoreba', 'wp_insert_post');
+    add_action('save_post_gatamasheba', 'wp_insert_post');
 });
 
 // მეტა ველების რეგისტრაცია REST API-სთვის
 add_action('rest_api_init', function() {
-    register_rest_field('gatashoreba', 'meta', array(
+    register_rest_field('gatamasheba', 'meta', array(
         'get_callback' => function($post) {
             return get_post_meta($post['id']);
         },
@@ -176,7 +176,7 @@ function normalize_phone_number($phone) {
 }
 
 // REST API-ით შექმნილი პოსტების ვალიდაცია
-add_action('rest_pre_insert_gatashoreba', function($prepared_post, $request) {
+add_action('rest_pre_insert_gatamasheba', function($prepared_post, $request) {
     $meta = $request->get_param('meta');
     $phone = isset($meta['_phone']) ? $meta['_phone'] : '';
     
@@ -185,7 +185,7 @@ add_action('rest_pre_insert_gatashoreba', function($prepared_post, $request) {
     
     // შევამოწმოთ არსებობს თუ არა უკვე ეს ნომერი
     $existing_posts = get_posts(array(
-        'post_type' => 'gatashoreba',
+        'post_type' => 'gatamasheba',
         'meta_query' => array(
             array(
                 'key' => '_phone_normalized',
@@ -211,7 +211,7 @@ add_action('rest_pre_insert_gatashoreba', function($prepared_post, $request) {
 }, 10, 2);
 
 // REST API-ით შექმნილი პოსტების სათაურის გენერაცია
-add_action('rest_after_insert_gatashoreba', function($post, $request, $creating) {
+add_action('rest_after_insert_gatamasheba', function($post, $request, $creating) {
     if ($creating) {
         $title = 'Ojaxi#' . $post->ID;
         

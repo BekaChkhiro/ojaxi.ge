@@ -431,7 +431,7 @@ function handle_clear_cart_after_order() {
         return;
     }
     
-    // გავასუფთათ კალა���ა
+    // გავასუფთათ კალათა
     WC()->cart->empty_cart();
     
     // დავამატოთ შეკვეთის სტატუსის განახლება (თუ საჭიროა)
@@ -939,7 +939,6 @@ add_action('rest_api_init', function() {
             $post_data = array(
                 'post_type' => 'gatashoreba',
                 'post_status' => 'publish',
-                'post_title' => 'temp_title' // დროებითი სათაური
             );
             
             $post_id = wp_insert_post($post_data);
@@ -947,12 +946,6 @@ add_action('rest_api_init', function() {
             if (is_wp_error($post_id)) {
                 return new WP_Error('create_failed', 'Failed to create post', array('status' => 500));
             }
-            
-            // დანვაახლოთ სათაური ID-ის მიხედვით
-            wp_update_post(array(
-                'ID' => $post_id,
-                'post_title' => 'Ojaxi#' . $post_id
-            ));
             
             // დავამატოთ მეტა მონაცემები
             update_post_meta($post_id, '_phone', sanitize_text_field($params['phone']));
@@ -989,6 +982,36 @@ add_action('rest_api_init', function() {
                 'success' => true,
                 'post_id' => $post_id
             ), 200);
+        },
+        'permission_callback' => '__return_true'
+    ));
+});
+
+// დავამატოთ endpoint ბოლო მონაწილეების მისაღებად
+add_action('rest_api_init', function() {
+    register_rest_route('custom/v1', '/recent-gatamasheba', array(
+        'methods' => 'GET',
+        'callback' => function() {
+            $args = array(
+                'post_type' => 'gatamasheba',
+                'posts_per_page' => 10,
+                'orderby' => 'date',
+                'order' => 'DESC'
+            );
+            
+            $posts = get_posts($args);
+            $users = array();
+            
+            foreach ($posts as $post) {
+                $users[] = array(
+                    'id' => $post->ID,
+                    'first_name' => get_post_meta($post->ID, '_first_name', true),
+                    'last_name' => get_post_meta($post->ID, '_last_name', true),
+                    'phone' => get_post_meta($post->ID, '_phone', true)
+                );
+            }
+            
+            return new WP_REST_Response($users, 200);
         },
         'permission_callback' => '__return_true'
     ));
