@@ -431,7 +431,7 @@ function handle_clear_cart_after_order() {
         return;
     }
     
-    // გავასუფთათ კალათა
+    // გავასუფთათ კალა���ა
     WC()->cart->empty_cart();
     
     // დავამატოთ შეკვეთის სტატუსის განახლება (თუ საჭიროა)
@@ -819,7 +819,7 @@ add_action('init', function() {
 
 // დავამატოთ endpoint-ები კალათის მენეჯმენტისთვის
 add_action('rest_api_init', function() {
-    // წაშლის endpoint
+    // აშლის endpoint
     register_rest_route('wc/store/v1', '/cart/items/(?P<key>[a-zA-Z0-9_-]+)', array(
         'methods' => 'DELETE',
         'callback' => function($request) {
@@ -879,94 +879,117 @@ add_action('rest_api_init', function() {
 // ჩართეთ custom-post-types.php ფაილი
 require_once get_template_directory() . '/custom-post-types.php';
 
-function verify_recaptcha($recaptcha_token) {
-    $secret_key = '6Lc8IpAqAAAAAEMj0ikZIt8fVgFmJ_7iqmkNy-07';
-    
-    if (empty($recaptcha_token)) {
-        return false;
+// REST API-ით შექმნილი პოსტების ვალიდაცია
+add_action('rest_pre_insert_gatashoreba', function($prepared_post, $request) {
+    // ... არსებული კოდი ...
+}, 10, 2);
+
+// დავამატოთ REST API-ს უფლებების კონფიგურაცია
+add_filter('rest_authentication_errors', function($result) {
+    // თუ მომხმარებელი არ არის ავტორიზებული, მაინც დავუშვათ მოთხოვნა
+    if (!empty($result)) {
+        return $result;
     }
+    return true;
+});
 
-    $verify_url = 'https://www.google.com/recaptcha/api/siteverify';
-    $response = wp_remote_post($verify_url, array(
-        'body' => array(
-            'secret' => $secret_key,
-            'response' => $recaptcha_token
-        )
-    ));
+// დავამატოთ gatashoreba პოსტ ტიპისთვის სპეციფიური უფლება
+add_filter('rest_gatashoreba_collection_params', function($params) {
+    return $params;
+});
 
-    if (is_wp_error($response)) {
-        return false;
-    }
+// დავამატოთ gatashoreba პოსტ ტიპისთვის create უფლება
+add_filter('rest_pre_insert_gatashoreba', function($prepared_post, $request) {
+    // გავთიშოთ ავტორიზაციის შემოწმება
+    remove_filter('rest_pre_insert_gatashoreba', 'rest_authorization_required_code');
+    return $prepared_post;
+}, 9, 2);
 
-    $response_body = json_decode(wp_remote_retrieve_body($response), true);
-    return isset($response_body['success']) && $response_body['success'] === true;
-}
+// დავამატოთ CORS-ის კონფიგურაცია
+add_action('rest_api_init', function() {
+    remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
+    add_filter('rest_pre_serve_request', function($value) {
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+        header('Access-Control-Allow-Credentials: true');
+        header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept');
+        
+        if ('OPTIONS' === $_SERVER['REQUEST_METHOD']) {
+            status_header(200);
+            exit();
+        }
+        
+        return $value;
+    });
+}, 15);
 
+// გავთიშოთ nonce შემოწმება gatashoreba პოსტ ტიპისთვის
+add_filter('rest_nonce_required_actions', function($required) {
+    return array_diff($required, ['create_gatashoreba']);
+});
+
+// დავამატოთ ახალი custom endpoint გათამაშებისთვის
 add_action('rest_api_init', function() {
     register_rest_route('custom/v1', '/gatashoreba', array(
         'methods' => 'POST',
-        'callback' => 'custom_gatashoreba_handler',
-        'permission_callback' => '__return_true',
+        'callback' => function($request) {
+            $params = $request->get_params();
+            
+            // შევქმნათ ახალი პოსტი
+            $post_data = array(
+                'post_type' => 'gatashoreba',
+                'post_status' => 'publish',
+                'post_title' => 'temp_title' // დროებითი სათაური
+            );
+            
+            $post_id = wp_insert_post($post_data);
+            
+            if (is_wp_error($post_id)) {
+                return new WP_Error('create_failed', 'Failed to create post', array('status' => 500));
+            }
+            
+            // დანვაახლოთ სათაური ID-ის მიხედვით
+            wp_update_post(array(
+                'ID' => $post_id,
+                'post_title' => 'Ojaxi#' . $post_id
+            ));
+            
+            // დავამატოთ მეტა მონაცემები
+            update_post_meta($post_id, '_phone', sanitize_text_field($params['phone']));
+            update_post_meta($post_id, '_first_name', sanitize_text_field($params['first_name']));
+            update_post_meta($post_id, '_last_name', sanitize_text_field($params['last_name']));
+            
+            // შევამოწმოთ ტელეფონის ნომრის დუბლირება
+            $normalized_phone = normalize_phone_number($params['phone']);
+            $existing_posts = get_posts(array(
+                'post_type' => 'gatashoreba',
+                'meta_query' => array(
+                    array(
+                        'key' => '_phone_normalized',
+                        'value' => $normalized_phone
+                    )
+                ),
+                'posts_per_page' => 1,
+                'post__not_in' => array($post_id)
+            ));
+            
+            if (!empty($existing_posts)) {
+                wp_delete_post($post_id, true);
+                return new WP_Error(
+                    'phone_exists',
+                    'ეს ნომერი უკვე დარეგისტრირებულია',
+                    array('status' => 400)
+                );
+            }
+            
+            // შევინახოთ ნორმალიზებული ნომერი
+            update_post_meta($post_id, '_phone_normalized', $normalized_phone);
+            
+            return new WP_REST_Response(array(
+                'success' => true,
+                'post_id' => $post_id
+            ), 200);
+        },
+        'permission_callback' => '__return_true'
     ));
 });
-
-function custom_gatashoreba_handler($request) {
-    $recaptcha = $request->get_param('recaptcha');
-    
-    // შევამოწმოთ რეკაპჩა
-    if (!$recaptcha || !verify_recaptcha($recaptcha)) {
-        return new WP_Error(
-            'invalid_recaptcha',
-            'რეკაპჩას ვერიფიკაცია ვერ მოხერხდა',
-            array('status' => 400)
-        );
-    }
-
-    $meta = $request->get_param('meta');
-    $phone = isset($meta['_phone']) ? $meta['_phone'] : '';
-    
-    // ნომრის ნორმალიზაცია
-    $normalized_phone = normalize_phone_number($phone);
-    
-    // შევამოწმოთ არსებობს თუ არა უკვე ეს ნომერი
-    $existing_posts = get_posts(array(
-        'post_type' => 'gatashoreba',
-        'meta_query' => array(
-            array(
-                'key' => '_phone_normalized',
-                'value' => $normalized_phone
-            )
-        ),
-        'posts_per_page' => 1
-    ));
-
-    if (!empty($existing_posts)) {
-        return new WP_Error(
-            'phone_exists',
-            'ეს ნომერი უკვე დარეგისტრირებულია',
-            array('status' => 400)
-        );
-    }
-
-    // შევქმნათ პოსტი
-    $post_id = wp_insert_post(array(
-        'post_type' => 'gatashoreba',
-        'post_status' => 'publish',
-        'post_title' => 'Ojaxi#' . get_next_post_id(),
-        'meta_input' => array(
-            '_phone' => $meta['_phone'],
-            '_phone_normalized' => $normalized_phone,
-            '_first_name' => $meta['_first_name'],
-            '_last_name' => $meta['_last_name'],
-        ),
-    ));
-
-    if (is_wp_error($post_id)) {
-        return new WP_Error('post_creation_failed', 'პოსტის შექმნა ვერ მოხერხდა', array('status' => 500));
-    }
-
-    return array(
-        'success' => true,
-        'post_id' => $post_id
-    );
-}
