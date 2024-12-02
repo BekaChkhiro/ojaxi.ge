@@ -452,7 +452,7 @@ function handle_order_completion($order_id) {
         // გავასუფთაოთ კალათა
         WC()->cart->empty_cart();
         
-        // დავამატოთ ქმედებ შეკვეთის დასრულებისას
+        // დავამატოთ ქმედებ შეკვეთის ���ასრულებისას
         do_action('custom_order_completed', $order_id);
     }
 }
@@ -567,7 +567,7 @@ add_action('rest_api_init', function() {
     }, 10, 3);
 });
 
-// დავამატოთ სესიის გაუმჯობესებული კონფიგურაცია
+// დავამატოთ ს��სიის გაუმჯობესებული კონფიგურაცია
 add_action('init', function() {
     if (PHP_SESSION_NONE === session_status()) {
         session_start(array(
