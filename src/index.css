@@ -1,0 +1,175 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* scroll bar */
+/* width */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Swiper კასტომიზაცია */
+.swiper {
+  padding: 15px 8px 30px !important;
+}
+
+@media (min-width: 768px) {
+  .swiper {
+    padding: 20px 10px 40px !important;
+  }
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  color: #3b82f6 !important;
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  .swiper-button-next,
+  .swiper-button-prev {
+    display: flex !important;
+  }
+}
+
+.swiper-pagination-bullet-active {
+  background: #3b82f6 !important;
+}
+
+/* Layout heights */
+.topbar-header, 
+.left-logo-container, 
+.right-title-container {
+  height: 10vh;
+}
+
+@media (min-width: 768px) {
+  .topbar-header, 
+  .left-logo-container, 
+  .right-title-container {
+    height: 10vh;
+  }
+}
+
+.left-main-content, 
+.right-main-content {
+  height: 84vh;
+}
+
+@media (min-width: 768px) {
+  .left-main-content, 
+  .right-main-content {
+    height: 90vh;
+  }
+}
+
+.topbar-content {
+  height: 84vh;
+}
+
+@media (min-width: 768px) {
+  .topbar-content {
+    height: 88vh;
+  }
+}
+
+.right-cart-container {
+  height: 100vh;
+}
+
+.right-cart-title {
+  height: 4vh;
+}
+
+@media (min-width: 768px) {
+  .right-cart-title {
+    height: 5vh;
+  }
+}
+
+.right-cart-items {
+  height: 60vh;
+}
+
+@media (min-width: 768px) {
+  .right-cart-items {
+    height: 65vh;
+  }
+}
+
+.left-checkout-container {
+  height: 20vh;
+}
+
+@media (min-width: 768px) {
+  .left-checkout-container {
+    height: 22vh;
+  }
+}
+
+/* Mobile bottom nav compensation */
+@media (max-width: 767px) {
+  .right-cart-items {
+    padding-bottom: 70px; /* კომპენსაცია ქვედა ნავიგაციისთვის */
+  }
+}
+
+.woocommerce-billing-fields__field-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.woocommerce-billing-fields__field-wrapper input {
+  padding: 6px!important;
+  border: 1px solid #ddd!important;
+  border-radius: 8px!important;
+  background-color: #fff!important;
+  font-size: 16px!important;
+  width: 100%!important;
+}
+
+
+#billing_first_name_field, #billing_phone_field, #billing_email_field, #billing_phone_alt_field, #billing_city_field, #billing_address_1_field {
+  width: 100%!important;
+}
+
+#billing_address_2 {
+  display: none!important;
+}
+
+#place_order {
+  background-color: #1a691a!important;
+  color: #fff!important;
+  border: none!important;
+  padding: 12px 20px!important;
+  border-radius: 8px!important;
+  font-size: 16px!important;
+}
+
+.woocommerce-checkout-payment {
+  background: none!important;
+  border: none!important;
+}
+
+.woocommerce-billing-fields h3 {
+  display: none;
+}
