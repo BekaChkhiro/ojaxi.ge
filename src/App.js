@@ -10,7 +10,7 @@ import Gatamasheba from './pages/Gatamasheba';
 function App() {
   return (
     <CartProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route path="product/:name" element={<SingleProduct />} />

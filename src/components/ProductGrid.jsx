@@ -113,8 +113,8 @@ const ProductGrid = () => {
       }
     };
 
-    fetchProducts();
-  }, []);
+    fetchProducts().catch((error) => console.error("Error fetching products:", error));
+  }, [loading, initialLoad]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -140,11 +140,11 @@ const ProductGrid = () => {
         const data = await response.json();
         setCategories(data.filter(cat => cat.count > 0));
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error("Error fetching categories:", error);
       }
     };
 
-    fetchCategories();
+    fetchCategories().catch((error) => console.error("Error fetching categories:", error));
   }, []);
 
   const handleAddToCart = async (e, product) => {
@@ -180,7 +180,7 @@ const ProductGrid = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (error) {
-      console.error('კალათაში დამატების შეცდომა:', error);
+      console.error("Error adding to cart:", error);
       alert('პროდუქტის დამატება ვერ მოხერხდა. გთხოვთ სცადოთ თავიდან.');
     } finally {
       setTimeout(() => {

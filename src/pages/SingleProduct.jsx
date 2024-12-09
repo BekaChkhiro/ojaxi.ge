@@ -7,15 +7,15 @@ const SingleProduct = () => {
   const { name } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const getProductId = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const idFromUrl = urlParams.get('id');
-    
+
     if (location.state?.productId) return location.state.productId;
     if (window.initialProductData?.productId) return window.initialProductData.productId;
     if (idFromUrl) return idFromUrl;
-    
+
     return null;
   };
 
@@ -55,34 +55,31 @@ const SingleProduct = () => {
             'Content-Type': 'application/json',
           }
         });
-
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error('Network response was not ok');
         }
 
         const data = await response.json();
-        
         if (!data || !data.id) {
           throw new Error('Invalid product data');
         }
 
         setProduct(data);
-        
+
         const baseTitle = document.title.split(' - ')[1] || '';
         document.title = data.name + (baseTitle ? ` - ${baseTitle}` : '');
 
         const correctSlug = data?.slug || createSlug(data.name);
         if (decodeURIComponent(name) !== correctSlug) {
-          navigate(`/product/${correctSlug}?id=${data.id}`, { 
+          navigate(`/product/${correctSlug}?id=${data.id}`, {
             state: { productId: data.id },
-            replace: true 
+            replace: true
           });
         }
 
         if (data.categories?.[0]?.id) {
           const relatedResponse = await fetch(
-            `${window.location.origin}/wp-json/wc/v3/products?category=${data.categories[0].id}&exclude=${currentProductId}&per_page=4`,
-            {
+            `${window.location.origin}/wp-json/wc/v3/products?category=${data.categories[0].id}&exclude=${currentProductId}&per_page=4`, {
               credentials: 'include',
               headers: {
                 'Accept': 'application/json',
@@ -90,7 +87,6 @@ const SingleProduct = () => {
               }
             }
           );
-
           if (relatedResponse.ok) {
             const relatedData = await relatedResponse.json();
             setRelatedProducts(relatedData);
@@ -98,20 +94,19 @@ const SingleProduct = () => {
         }
 
       } catch (error) {
-        console.error('Error details:', error);
-        
+        console.error("Error fetching product:", error);
         let errorMessage = 'დაფიქსირდა შეცდომა';
-        
+
         if (!navigator.onLine) {
           errorMessage = 'ინტერნეტთან კავშირი ვერ მოხერხდა';
         } else if (error.message.includes('Product ID not found')) {
           errorMessage = 'პროდუქტის ID ვერ მოიძებნა';
         } else if (error.message.includes('Invalid product data')) {
           errorMessage = 'პროდუქტის მონაცემები არასწორია';
-        } else if (error.message.includes('HTTP error')) {
+        } else if (error.message.includes('Network response was not ok')) {
           errorMessage = 'სერვერთან კავშირი ვერ მოხერხდა';
         }
-        
+
         setError(errorMessage);
       } finally {
         setLoading(false);
@@ -134,17 +129,17 @@ const SingleProduct = () => {
         regular_price: parseFloat(product.regular_price || product.price),
         sale_price: product.sale_price ? parseFloat(product.sale_price) : null,
       });
-      
+
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 3000);
-      
+
       setShowRightSidebar(true);
-      
+
       if (window.innerWidth < 1024) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (error) {
-      console.error('კალათაში დამატების შეცდომა:', error);
+      console.error("Error adding to cart:", error);
       alert('პროდუქტის დამატება ვერ მოხერხდა. გთხოვთ სცადოთ თავიდან.');
     } finally {
       setIsAdding(false);
@@ -193,7 +188,7 @@ const SingleProduct = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <div className="text-red-500 mb-4">{error}</div>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
@@ -242,10 +237,10 @@ const SingleProduct = () => {
               />
             </div>
           </div>
-          
+
           {product.images.length > 1 && (
-            <div 
-              className="grid grid-cols-4 gap-2" 
+            <div
+              className="grid grid-cols-4 gap-2"
               style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}
             >
               {product.images.map((image, index) => (
@@ -281,7 +276,7 @@ const SingleProduct = () => {
           <h1 className="text-3xl font-medium text-gray-900 mb-4" style={{ marginBottom: '1rem' }}>
             {product.name}
           </h1>
-          
+
           <div className="flex items-center gap-4 mb-6" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
             {product.regular_price !== product.price && (
               <span className="text-gray-400 line-through text-xl">
@@ -298,7 +293,7 @@ const SingleProduct = () => {
             )}
           </div>
 
-          <div 
+          <div
             className="prose prose-sm mb-6"
             dangerouslySetInnerHTML={{ __html: product.description }}
             style={{ marginBottom: '1.5rem' }}
@@ -316,7 +311,7 @@ const SingleProduct = () => {
           </div>
 
           {product.stock_status === 'instock' && (
-            <button 
+            <button
               onClick={handleAddToCart}
               className={`hidden lg:flex w-full md:w-auto px-8 h-12 items-center justify-center gap-4 bg-[#1a691a] rounded-full transition-colors ${
                 isAdding ? 'opacity-75' : ''
@@ -327,18 +322,18 @@ const SingleProduct = () => {
                 {isAdding ? 'ემატება...' : 'დამატება'}
               </span>
               {!isAdding && (
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
                   className="w-5 h-5 text-white"
                   fill="none"
-                  viewBox="0 0 24 24" 
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M12 4v16m8-8H4" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
                   />
                 </svg>
               )}
@@ -352,21 +347,21 @@ const SingleProduct = () => {
           <h2 className="text-2xl font-medium text-gray-900 mb-6" style={{ marginBottom: '1.5rem' }}>
             მსგავსი პროდუქტები
           </h2>
-          <div 
+          <div
             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"
-            style={{ 
+            style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
               gap: '1.5rem'
             }}
           >
             {relatedProducts.map((relatedProduct) => (
-              <div 
-                key={relatedProduct.id} 
+              <div
+                key={relatedProduct.id}
                 className="bg-white rounded-lg overflow-hidden shadow-sm"
                 style={{ display: 'flex', flexDirection: 'column' }}
               >
-                <Link 
+                <Link
                   to={`/product/${relatedProduct?.slug || createSlug(relatedProduct.name)}?id=${relatedProduct.id}`}
                   state={{ productId: relatedProduct.id }}
                   style={{ display: 'flex', flexDirection: 'column', flex: 1 }}
@@ -389,7 +384,7 @@ const SingleProduct = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="p-4" style={{ padding: '1rem' }}>
                     <div className="text-xs text-gray-500 mb-1">
                       {relatedProduct.categories?.[0]?.name || 'Uncategorized'}
@@ -397,7 +392,7 @@ const SingleProduct = () => {
                     <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
                       {relatedProduct.name}
                     </h3>
-                    
+
                     <div className="flex items-center gap-2">
                       {relatedProduct.regular_price !== relatedProduct.price && (
                         <span className="text-gray-400 line-through text-sm">
@@ -441,7 +436,7 @@ const SingleProduct = () => {
                 <span className="text-sm font-medium text-gray-600">უკან</span>
               </button>
 
-              <button 
+              <button
                 onClick={handleAddToCart}
                 className={`flex-1 h-10 flex items-center justify-center gap-2 bg-[#1a691a] rounded-lg transition-colors ${
                   isAdding ? 'opacity-75' : ''
@@ -452,18 +447,18 @@ const SingleProduct = () => {
                   {isAdding ? 'ემატება...' : 'დამატება'}
                 </span>
                 {!isAdding && (
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
                     className="w-4 h-4 text-white"
                     fill="none"
-                    viewBox="0 0 24 24" 
+                    viewBox="0 0 24 24"
                     stroke="currentColor"
                   >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M12 4v16m8-8H4" 
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
                     />
                   </svg>
                 )}
