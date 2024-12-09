@@ -10,6 +10,7 @@ const ProductGrid = () => {
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [sortOption, setSortOption] = useState('price-asc');
   const { addToCart, setShowRightSidebar, refreshCart } = useCart();
   const [isAdding, setIsAdding] = useState(null);
   const [visibleProducts, setVisibleProducts] = useState(window.innerWidth >= 1024 ? 9 : 6);
@@ -201,6 +202,19 @@ const ProductGrid = () => {
     localStorage.setItem('lastViewedProductPosition', index.toString());
   };
 
+  const sortProducts = (products) => {
+    switch (sortOption) {
+      case 'price-asc':
+        return [...products].sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+      case 'price-desc':
+        return [...products].sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+      case 'popularity':
+        return [...products].sort((a, b) => b.popularity - a.popularity); // Assuming popularity is a property
+      default:
+        return products;
+    }
+  };
+
   if (loading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 px-3 md:px-0">
@@ -251,50 +265,67 @@ const ProductGrid = () => {
 
   return (
     <div className="flex flex-col gap-4 md:gap-6 px-0 md:px-0 pb-16 md:pb-6 w-full">
-      <div className="flex items-center gap-2 py-2 px-3 md:px-0 -mx-3 md:mx-0">
-        <button onClick={scrollCategoriesLeft} className="text-gray-700 hover:text-gray-900 bg-white rounded-full p-1">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <div 
-          ref={categoriesRef} 
-          className="flex overflow-x-auto gap-2 categories-scroll no-scrollbar"
-          onMouseDown={handleMouseDown}
-          onMouseLeave={handleMouseLeave}
-          onMouseUp={handleMouseUp}
-          onMouseMove={handleMouseMove}
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          <button
-            onClick={() => setSelectedCategory(null)}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm transition-colors ${
-              selectedCategory === null
-                ? 'bg-[#1a691a] text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+      <div className="flex flex-col md:flex-row items-center gap-2 py-2 px-3 md:px-0 -mx-3 md:mx-0">
+        <div className="flex items-center justify-between w-full md:w-4/5">
+          <div className="flex items-center justify-center">
+            <button onClick={scrollCategoriesLeft} className="text-gray-700 hover:text-gray-900 bg-white rounded-full p-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex overflow-x-auto gap-2 categories-scroll no-scrollbar mx-2"
+            ref={categoriesRef}
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            ყველა
-          </button>
-          {categories.map((category) => (
             <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
+              onClick={() => setSelectedCategory(null)}
               className={`whitespace-nowrap px-4 py-2 rounded-full text-sm transition-colors ${
-                selectedCategory === category.id
+                selectedCategory === null
                   ? 'bg-[#1a691a] text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              {category.name}
+              ყველა
             </button>
-          ))}
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm transition-colors ${
+                  selectedCategory === category.id
+                    ? 'bg-[#1a691a] text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center justify-center">
+            <button onClick={scrollCategoriesRight} className="text-gray-700 hover:text-gray-900 bg-white rounded-full p-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </div>
-        <button onClick={scrollCategoriesRight} className="text-gray-700 hover:text-gray-900 bg-white rounded-full p-1">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        <div className="w-full md:w-1/5 mt-2 md:mt-0">
+          <select
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value)}
+            className="w-full bg-white border border-gray-300 rounded-full px-3 py-1 text-sm"
+          >
+            <option value="default">ნაგულისხმევი</option>
+            <option value="price-asc">ფასი: ზრდადი</option>
+            <option value="price-desc">ფასი: კლებადი</option>
+            <option value="popularity">პოპულარობის მიხედვით</option>
+          </select>
+        </div>
       </div>
 
       {showConfetti && (
@@ -315,7 +346,7 @@ const ProductGrid = () => {
       )}
       
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 w-full">
-        {products
+        {sortProducts(products)
           .filter(product => 
             selectedCategory 
               ? product.categories.some(cat => cat.id === selectedCategory)
@@ -418,7 +449,7 @@ const ProductGrid = () => {
           ))}
       </div>
       
-      {hasMore && products.filter(product => selectedCategory ? product.categories.some(cat => cat.id === selectedCategory) : true).length > 4 && products.length > visibleProducts && (
+      {hasMore && products.filter(product => selectedCategory ? product.categories.some(cat => cat.id === selectedCategory) : true).length > (window.innerWidth >= 1024 ? 6 : 4) && products.length > visibleProducts && (
         <div className="flex justify-center mt-4 md:mt-8">
           <button
             onClick={loadMore}
