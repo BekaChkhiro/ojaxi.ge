@@ -25,8 +25,8 @@ add_action('wp_head', function() {
         <?php
     }
 });
-?>
 
+?>
 <div class="content-area">
     <main id="main" class="site-main flex justify-center">
         <div class="custom-checkout-container p-4 w-full lg:w-4/6">
@@ -89,24 +89,39 @@ add_action('wp_head', function() {
             // დავამატოთ კალათის განახლების ლოგიკა
             add_action('wp_head', function() {
                 if (is_checkout()) {
+                    // Debug cart calculations
+                    error_log('Cart Total Before: ' . WC()->cart->get_total('edit'));
                     WC()->cart->calculate_totals();
+                    error_log('Cart Total After: ' . WC()->cart->get_total('edit'));
+                    
+                    // Check payment gateways
+                    $available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+                    error_log('Available Payment Gateways: ' . print_r($available_gateways, true));
                     ?>
                     <script>
                         // კალათის განახლება გვერდის ჩატვირთვისას
                         document.addEventListener('DOMContentLoaded', function() {
                             if (typeof wc_checkout_params !== 'undefined') {
                                 jQuery(function($) {
+                                    console.log('Checkout params:', wc_checkout_params);
+                                    
                                     // ძალით განვაახლოთ კალათის მონაცემები
                                     $('body').trigger('update_checkout');
                                     
                                     // დავაფიქსიროთ კალათის განახლება
                                     $(document.body).on('updated_checkout', function() {
+                                        console.log('Checkout updated');
+                                        console.log('Cart total:', $('.order-total .amount').text());
+                                        
                                         // გადავამოწმოთ თანხა განახლების შემდეგ
                                         if ($('.order-total .amount').length === 0) {
+                                            console.log('No total amount found, reloading...');
                                             location.reload();
                                         }
                                     });
                                 });
+                            } else {
+                                console.error('WooCommerce checkout params not found');
                             }
                         });
                     </script>
@@ -125,7 +140,7 @@ add_action('wp_head', function() {
                             <?php do_action('woocommerce_checkout_billing'); ?>
                         </div>
                     <?php endif; ?>
-
+                    
                     <div class="order-review">
                         <div class="total-row flex justify-between items-center">
                             <span class="total-label">სულ ჯამი:</span>
@@ -154,11 +169,36 @@ add_action('wp_head', function() {
                 ?>
                 <script>
                 jQuery(document).ready(function($) {
-                    $(document.body).on('checkout_error', function() {
-                        window.parent.postMessage({ checkoutError: true }, '*');
+                    // Add detailed error logging
+                    $(document.body).on('checkout_error', function(event, errors) {
+                        console.log('Checkout Error Details:', errors);
+                        
+                        // Log error to server
+                        $.ajax({
+                            url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                            type: 'POST',
+                            data: {
+                                action: 'log_checkout_error',
+                                errors: JSON.stringify(errors),
+                                nonce: '<?php echo wp_create_nonce('checkout_error_nonce'); ?>'
+                            }
+                        });
+
+                        // Show detailed error message
+                        if (errors && errors.messages) {
+                            alert('შეცდომა გადახდისას: ' + errors.messages.join('\n'));
+                        }
+                        
+                        window.parent.postMessage({ 
+                            checkoutError: true,
+                            errorDetails: errors
+                        }, '*');
                     });
 
+                    // Improve order created handling
                     $(document.body).on('order_created', function(event, order_id) {
+                        console.log('Order Created:', order_id);
+                        
                         $.ajax({
                             url: '<?php echo admin_url('admin-ajax.php'); ?>',
                             type: 'POST',
@@ -168,20 +208,27 @@ add_action('wp_head', function() {
                                 nonce: '<?php echo wp_create_nonce('clear_cart_nonce'); ?>'
                             },
                             success: function(response) {
+                                console.log('Clear cart response:', response);
                                 if (response.success) {
-                                    // შევატყობინოთ React აპლიკაციას
                                     window.parent.postMessage({ 
                                         orderComplete: true,
                                         orderId: order_id
                                     }, '*');
                                     
-                                    // დავარეფრეშოთ გვერდი მცირე დაყოვნების შემდეგ
                                     setTimeout(function() {
                                         window.location.reload();
                                     }, 500);
                                 }
+                            },
+                            error: function(xhr, status, error) {
+                                console.error('Clear cart error:', error);
                             }
                         });
+                    });
+
+                    // Add form submission monitoring
+                    $('form.checkout').on('submit', function(e) {
+                        console.log('Checkout form submitted');
                     });
                 });
                 </script>
@@ -194,4 +241,4 @@ add_action('wp_head', function() {
     </main>
 </div>
 
-<?php get_footer(); ?> 
+<?php get_footer(); ?>
