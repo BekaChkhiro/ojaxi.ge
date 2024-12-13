@@ -63,7 +63,7 @@ add_action('wp_head', function() {
                             />
                         </svg>
                     </div>
-                    <h2 class="text-2xl font-semibold mb-4">მადლობა შეკვეთისთვის!</h2>
+                    <h2 class="text-2xl font-semibold mb-4">მადლობა შეკვეთისთვის</h2>
                     <p class="text-gray-600 mb-8">თქვენი შეკვეთა წარმატებით გაფორმდა</p>
                 </div>
                 <script>
