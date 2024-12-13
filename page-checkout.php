@@ -185,7 +185,7 @@ add_action('wp_head', function() {
 
                         // Show detailed error message
                         if (errors && errors.messages) {
-                            alert('შეცდომა გადახდისას: ' + errors.messages.join('\n'));
+                            alert('შეცდომა გადახდისას ' + errors.messages.join('\n'));
                         }
                         
                         window.parent.postMessage({ 
