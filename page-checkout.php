@@ -38,7 +38,6 @@ add_action('wp_head', function() {
                     style="width: 100px;"
                 />
                 </a>
-                
             </div>
             
             <?php
