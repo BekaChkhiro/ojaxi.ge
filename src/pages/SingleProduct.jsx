@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import Confetti from 'react-confetti';
+import AddIcon from '../icons/plus.svg';
 
 const SingleProduct = () => {
   const { name } = useParams();
@@ -318,24 +319,11 @@ const SingleProduct = () => {
               }`}
               disabled={isAdding}
             >
-              <span className='text-white font-bold'>
-                {isAdding ? 'ემატება...' : `${product.price}₾`}
+              <span className='text-white'>
+                {isAdding ? 'ემატება...' : `${product.price} ₾`}
               </span>
               {!isAdding && (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
+                <img src={AddIcon} alt="Cart Icon" className="w-3 h-3 md:w-4 md:h-4" />
               )}
             </button>
           )}

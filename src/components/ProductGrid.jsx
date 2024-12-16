@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import ChristmasGift from '../images/christmas_gift.webp';
+import AddIcon from '../icons/plus.svg';
 import Confetti from 'react-confetti';
 
 const ProductGrid = () => {
@@ -418,30 +419,17 @@ const ProductGrid = () => {
               <div className="px-3 md:px-4 pb-3 md:pb-4">
                 <button 
                   onClick={(e) => handleAddToCart(e, product)}
-                  className={`w-full h-10 md:h-10 flex items-center justify-center gap-2 md:gap-4 bg-[#1a691a] rounded-lg transition-colors ${
+                  className={`w-full h-10 md:h-10 flex items-center justify-center gap-2 md:gap-2 bg-[#1a691a] rounded-lg transition-colors ${
                     isAdding === product.id ? 'opacity-75' : ''
                   }`}
                   disabled={isAdding === product.id}
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <span className='text-white text-sm md:text-base font-medium'>
-                    {isAdding === product.id ? 'ემატება...' : `${product.price}₾`}
+                  <span className='text-white text-sm md:text-base '>
+                    {isAdding === product.id ? 'ემატება...' : `${product.price} ₾`}
                   </span>
                   {isAdding !== product.id && (
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className="w-4 h-4 md:w-5 md:h-5 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24" 
-                      stroke="currentColor"
-                    >
-                      <path 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        strokeWidth={2} 
-                        d="M12 4v16m8-8H4" 
-                      />
-                    </svg>
+                    <img src={AddIcon} alt="Cart Icon" className="w-3 h-3 md:w-4 md:h-4" />
                   )}
                 </button>
               </div>
