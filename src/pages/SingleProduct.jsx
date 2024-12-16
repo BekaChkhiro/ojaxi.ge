@@ -319,11 +319,11 @@ const SingleProduct = () => {
               }`}
               disabled={isAdding}
             >
-              <span className='text-white'>
+              <span className='text-white text-2xl'>
                 {isAdding ? 'ემატება...' : `${product.price} ₾`}
               </span>
               {!isAdding && (
-                <img src={AddIcon} alt="Cart Icon" className="w-3 h-3 md:w-4 md:h-4" />
+                <img src={AddIcon} alt="Cart Icon" className="w-5 h-5 md:w-6 md:h-6" />
               )}
             </button>
           )}
@@ -431,11 +431,11 @@ const SingleProduct = () => {
                 }`}
                 disabled={isAdding}
               >
-                <span className='text-white text-sm font-medium'>
+                <span className='text-white text-xl font-medium'>
                   {isAdding ? 'ემატება...' : `${product.price}₾`}
                 </span>
                 {!isAdding && (
-                  <img src={AddIcon} alt="Cart Icon" className="w-3 h-3 md:w-4 md:h-4" />
+                  <img src={AddIcon} alt="Cart Icon" className="w-5 h-5 md:w-6 md:h-6" />
                 )}
               </button>
             </div>

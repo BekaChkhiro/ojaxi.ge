@@ -425,11 +425,11 @@ const ProductGrid = () => {
                   disabled={isAdding === product.id}
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <span className='text-white text-sm md:text-base '>
+                  <span className='text-white text-xl md:text-2xl '>
                     {isAdding === product.id ? 'ემატება...' : `${product.price} ₾`}
                   </span>
                   {isAdding !== product.id && (
-                    <img src={AddIcon} alt="Cart Icon" className="w-3 h-3 md:w-4 md:h-4" />
+                    <img src={AddIcon} alt="Cart Icon" className="w-5 h-5 md:w-5 md:h-5" />
                   )}
                 </button>
               </div>
