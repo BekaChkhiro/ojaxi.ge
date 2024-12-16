@@ -374,4 +374,4 @@ add_filter('woocommerce_checkout_fields', function($fields) {
 // Hide order comments
 add_filter('woocommerce_enable_order_notes_field', '__return_false');
 
-//updated
+//updated 1
