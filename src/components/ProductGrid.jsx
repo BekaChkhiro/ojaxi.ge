@@ -425,7 +425,7 @@ const ProductGrid = () => {
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   <span className='text-white text-sm md:text-base font-medium'>
-                    {isAdding === product.id ? 'ემატება...' : 'დამატება'}
+                    {isAdding === product.id ? 'ემატება...' : `${product.price}₾`}
                   </span>
                   {isAdding !== product.id && (
                     <svg 

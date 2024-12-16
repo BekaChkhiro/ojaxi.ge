@@ -319,7 +319,7 @@ const SingleProduct = () => {
               disabled={isAdding}
             >
               <span className='text-white font-bold'>
-                {isAdding ? 'ემატება...' : 'დამატება'}
+                {isAdding ? 'ემატება...' : `${product.price}₾`}
               </span>
               {!isAdding && (
                 <svg
@@ -444,7 +444,7 @@ const SingleProduct = () => {
                 disabled={isAdding}
               >
                 <span className='text-white text-sm font-medium'>
-                  {isAdding ? 'ემატება...' : 'დამატება'}
+                  {isAdding ? 'ემატება...' : `${product.price}₾`}
                 </span>
                 {!isAdding && (
                   <svg
